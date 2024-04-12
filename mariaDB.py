@@ -1,7 +1,8 @@
 import pymysql
+from SQL import SQl
 
 
-class MariaDB(object):
+class MariaDB(SQl):
 
     def __init__(self, host: str, port: int, user: str, passwd: str, db: str = None):
         self._host_ = host
