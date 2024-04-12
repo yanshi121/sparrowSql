@@ -26,9 +26,3 @@ class Sparrow(object):
         r.close()
         return r.json()
 
-
-if __name__ == '__main__':
-    sparrow = Sparrow("127.0.0.1", 712)
-    for i in range(11):
-        sparrow.set(f"key{i}", 1)
-    print(sparrow.get_all())

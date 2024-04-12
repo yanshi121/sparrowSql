@@ -1,10 +1,9 @@
 import pymysql
-from colorama import Fore, init
 
 
 class MySQL(object):
 
-    def __init__(self, host: str, port: int, user: str, passwd: str, db: str):
+    def __init__(self, host: str, port: int, user: str, passwd: str, db: str = None):
         self._host_ = host
         self._port_ = port
         self._user_ = user
@@ -13,11 +12,14 @@ class MySQL(object):
         self._connect_: pymysql.connect = ""
         self._cursor_: pymysql.connect.cursor = ""
         self._get_connect_()
-        init(autoreset=True)
 
     def _get_connect_(self):
-        self._connect_ = pymysql.connect(host=self._host_, user=self._user_, password=self._passwd_,
-                                         port=self._port_, database=self._db_)
+        if self._db_ is not None:
+            self._connect_ = pymysql.connect(host=self._host_, user=self._user_, password=self._passwd_,
+                                             port=self._port_)
+        else:
+            self._connect_ = pymysql.connect(host=self._host_, user=self._user_, password=self._passwd_,
+                                             port=self._port_, database=self._db_)
         self._cursor_ = self._connect_.cursor()
         if not self._cursor_:
             raise Exception(f"{self._host_}--数据库连接失败")
@@ -258,6 +260,10 @@ class MySQL(object):
             self._cursor_.execute(self._sql_)
             self._connect_.commit()
 
+    def create_database(self, database_name, character="utf8mb4", collate="utf8mb4_general_ci"):
+        sql = f"CREATE DATABASE IF NOT EXISTS {database_name} CHARACTER SET {character} COLLATE {collate}"
+        self._cursor_.execute(sql)
+
     def create_table(self, table_name, table_comment=None):
         return self._CreateTable(self._connect_, self._cursor_, table_name, table_comment=table_comment)
 
@@ -281,12 +287,13 @@ class MySQL(object):
         sql = f"DROP DATABASE IF EXISTS {database_name}"
         self._cursor_.execute(sql)
 
-    def alter_table(self, table_name, new_table_name):
+    def alter_table_name(self, table_name, new_table_name):
         sql = f"ALTER TABLE {table_name} RENAME TO {new_table_name}"
         self._cursor_.execute(sql)
 
 
 if __name__ == '__main__':
-    run = MySQL("localhost", 3306, "root", "root123", "recruit")
-    print(run.select_page("work_boos"))
+    run = MySQL("192.168.233.131", 3306, "root", "123456")
+    run.drop_database("test")
+    print(run.show_database())
 
