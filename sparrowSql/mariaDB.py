@@ -1,10 +1,11 @@
 import pymysql
-from SQL import SQl
+from sparrowSql.SQL import SQl
 
 
-class MySQL(SQl):
+class MariaDB(SQl):
 
     def __init__(self, host: str, port: int, user: str, passwd: str, db: str = None):
+        SQl.__init__(self)
         self._host_ = host
         self._port_ = port
         self._user_ = user
@@ -494,8 +495,9 @@ class MySQL(SQl):
         sql = f"ALTER TABLE {table_name} CHANGE {column_name} {new_column_name} {column_type}({length})"
         self._cursor_.execute(sql)
 
-    def add_column(self, table_name: str, column_name: str, column_type: str, length: int, is_not_null: bool = True,
-                   is_primary_key: str = False, is_auto_increment: str = False, is_first: bool = False):
+    def add_column(self, table_name: str, column_name: str, column_type: str = "varchar", length: int = 255,
+                   is_not_null: bool = True, is_primary_key: str = False, is_auto_increment: str = False,
+                   is_first: bool = False):
         """
         向表中新增字段
         :param is_first: True将新加的属性设置为该表的第一个字段,False将新加的字段置于该表其余字段之后
@@ -521,7 +523,3 @@ class MySQL(SQl):
             sql += " FIRST"
         self._cursor_.execute(sql)
 
-
-if __name__ == '__main__':
-    run = MySQL("192.168.233.131", 3306, "root", "123456")
-    run.add_column("table_name", "c", "int", 20, is_first=True)

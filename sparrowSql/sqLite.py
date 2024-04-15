@@ -1,75 +1,28 @@
-import pymysql
-from SQL import SQl
+import sqlite3
+from sparrowSql.SQL import SQl
 
 
-class MariaDB(SQl):
-
-    def __init__(self, host: str, port: int, user: str, passwd: str, db: str = None):
-        self._host_ = host
-        self._port_ = port
-        self._user_ = user
-        self._passwd_ = passwd
-        self._db_ = db
-        self._connect_: pymysql.connect = ""
-        self._cursor_: pymysql.connect.cursor = ""
-        self._get_connect_()
-
-    def _get_connect_(self):
-        """
-        获取数据库连接
-        :return:
-        """
-        if self._db_ is not None:
-            self._connect_ = pymysql.connect(host=self._host_, user=self._user_, password=self._passwd_,
-                                             port=self._port_)
-        else:
-            self._connect_ = pymysql.connect(host=self._host_, user=self._user_, password=self._passwd_,
-                                             port=self._port_, database=self._db_)
+class SqLite(SQl):
+    def __init__(self, db_file):
+        self._connect_ = sqlite3.connect(db_file)
         self._cursor_ = self._connect_.cursor()
-        if not self._cursor_:
-            raise Exception(f"{self._host_}--数据库连接失败")
-
-    def connect_information(self):
-        """
-        返回数据库连接信息
-        :return:
-        """
-        return {
-            "host": self._host_,
-            "port": self._port_,
-            "user": self._user_,
-            "passwd": self._passwd_,
-            "db": self._db_
-        }
 
     def close(self):
-        """
-        关闭游标和连接
-        :return:
-        """
         self._cursor_.close()
         self._connect_.close()
 
     def commit(self):
-        """
-        提交
-        :return:
-        """
         self._connect_.commit()
 
     def commit_close(self):
-        """
-        提交并关闭
-        :return:
-        """
-        self.commit()
         self.close()
+        self.commit()
 
     def user_defined_sql(self, sql: str, params: tuple = None):
         """
         运行自定义SQL\n
         在不输入参数: user_defined_sql('select name from user where id = 1')\n
-        输入参数: user_defined_sql('select name from user where id = %s', (1))
+        输入参数: user_defined_sql('select name from user where id = ?', (1))
         :param sql: SQL
         :param params: 参数，输入参数为参数化查询
         :return:
@@ -101,11 +54,12 @@ class MariaDB(SQl):
                 if len(value) == len(columns):
                     for value_s in value:
                         params += (value_s,)
-                    value_list.append("(" + ", ".join(["%s" for i in value]) + ")")
+                    value_list.append("(" + ", ".join(["?" for i in value]) + ")")
                 else:
                     raise Exception(f"{columns}->{len(columns)} != {value}->{len(value)}")
             values = ", ".join(value_list)
             sql = f"insert into {table} {column} values {values};"
+            print(sql)
             self._cursor_.execute(sql, params)
             return sql
         else:
@@ -113,7 +67,7 @@ class MariaDB(SQl):
             if len(values) == len(columns):
                 for value_s in values:
                     params += (value_s,)
-                values = "(" + ", ".join(["%s" for i in values]) + ")"
+                values = "(" + ", ".join(["?" for i in values]) + ")"
                 sql = f"insert into {table} {column} values {values};"
                 self._cursor_.execute(sql, params)
                 return sql
@@ -138,13 +92,13 @@ class MariaDB(SQl):
         for column, value in columns_values.items():
             if value != "":
                 params += (value,)
-                set_str += f"{column}=%s,"
+                set_str += f"{column}=?,"
         if len(conditions) != 0:
             where_str += "where "
             for condition_key, condition_value in conditions.items():
                 if condition_value != '':
                     params += (condition_value,)
-                    where_str += f"{condition_key}=%s and "
+                    where_str += f"{condition_key}=? and "
         sql = f"update {table} set {set_str[:-1]} {where_str[:-5]};"
         self._cursor_.execute(sql, params)
 
@@ -161,7 +115,7 @@ class MariaDB(SQl):
         params = ()
         for column, value in conditions.items():
             params += (value,)
-            delete_str += f"{column}=%s and "
+            delete_str += f"{column}=? and "
         sql = f"delete from {table} where {delete_str[:-5]};"
         self._cursor_.execute(sql, params)
 
@@ -190,7 +144,7 @@ class MariaDB(SQl):
         if conditions is not None:
             for column, value in conditions.items():
                 params += (value,)
-                condition_str += f"{column}=%s and "
+                condition_str += f"{column}=? and "
             condition_str = condition_str[:-5]
             sql = f"select {column_str} from {table} where {condition_str}"
         else:
@@ -233,7 +187,7 @@ class MariaDB(SQl):
         if conditions is not None:
             for column, value in conditions.items():
                 params += (value,)
-                condition_str += f"{column}=%s and "
+                condition_str += f"{column}=? and "
             condition_str = condition_str[:-5]
             sql = f"select {column_str} from {table} where {condition_str}"
         else:
@@ -245,7 +199,7 @@ class MariaDB(SQl):
                 sql += f" order by {sort_column} desc"
         page_index = page_index * page_size
         params += (page_size, page_index)
-        sql += f" limit %s offset %s"
+        sql += f" limit ? offset ?"
         self._cursor_.execute(sql, params)
         row = self._cursor_.fetchall()
         return row
@@ -494,8 +448,9 @@ class MariaDB(SQl):
         sql = f"ALTER TABLE {table_name} CHANGE {column_name} {new_column_name} {column_type}({length})"
         self._cursor_.execute(sql)
 
-    def add_column(self, table_name: str, column_name: str, column_type: str, length: int, is_not_null: bool = True,
-                   is_primary_key: str = False, is_auto_increment: str = False, is_first: bool = False):
+    def add_column(self, table_name: str, column_name: str, column_type: str = "varchar", length: int = 255,
+                   is_not_null: bool = True, is_primary_key: str = False, is_auto_increment: str = False,
+                   is_first: bool = False):
         """
         向表中新增字段
         :param is_first: True将新加的属性设置为该表的第一个字段,False将新加的字段置于该表其余字段之后
@@ -520,4 +475,3 @@ class MariaDB(SQl):
         if is_first:
             sql += " FIRST"
         self._cursor_.execute(sql)
-
