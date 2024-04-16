@@ -15,8 +15,8 @@ class SqLite(SQl):
         self._connect_.commit()
 
     def commit_close(self):
-        self.close()
         self.commit()
+        self.close()
 
     def user_defined_sql(self, sql: str, params: tuple = None):
         """
@@ -59,7 +59,6 @@ class SqLite(SQl):
                     raise Exception(f"{columns}->{len(columns)} != {value}->{len(value)}")
             values = ", ".join(value_list)
             sql = f"insert into {table} {column} values {values};"
-            print(sql)
             self._cursor_.execute(sql, params)
             return sql
         else:
@@ -475,3 +474,36 @@ class SqLite(SQl):
         if is_first:
             sql += " FIRST"
         self._cursor_.execute(sql)
+
+    def create_index(self, table_name: str, column_name: str, index_name: str):
+        """
+        创建索引
+        :param table_name: 表名
+        :param column_name: 列名
+        :param index_name: 索引名
+        :return:
+        """
+        sql = f"CREATE INDEX {index_name} ON {table_name} ({column_name});"
+        self._cursor_.execute(sql)
+
+    def create_unique_index(self, table_name: str, column_name: str, index_name: str):
+        """
+        创建唯一索引
+        :param table_name: 表名
+        :param column_name: 列名
+        :param index_name: 索引名
+        :return:
+        """
+        sql = f"CREATE UNIQUE INDEX {index_name} ON {table_name} ({column_name});"
+        self._cursor_.execute(sql)
+
+    def drop_index(self, table_name: str, index_name: str):
+        """
+        删除索引
+        :param table_name: 表名
+        :param index_name: 索引名
+        :return:
+        """
+        sql = f"DROP INDEX IF EXISTS {index_name}_on_{table_name};"
+        self._cursor_.execute(sql)
+

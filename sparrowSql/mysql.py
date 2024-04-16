@@ -522,7 +522,40 @@ class MySQL(SQl):
             sql += " FIRST"
         self._cursor_.execute(sql)
 
+    def create_index(self, table_name: str, column_name: str, index_name: str):
+        """
+        创建单列索引
+        :param table_name: 表名
+        :param column_name: 列名
+        :param index_name: 索引名
+        :return:
+        """
+        sql = f"CREATE INDEX {index_name} ON {table_name} ({column_name});"
+        self._cursor_.execute(sql)
+
+    def create_unique_index(self, table_name: str, column_name: str, index_name: str):
+        """
+        创建单列唯一索引
+        :param table_name: 表名
+        :param column_name: 列名
+        :param index_name: 索引名
+        :return:
+        """
+        sql = f"CREATE UNIQUE INDEX {index_name} ON {table_name} ({column_name});"
+        self._cursor_.execute(sql)
+
+    def drop_index(self, table_name: str, index_name: str):
+        """
+        删除索引
+        :param table_name: 表名
+        :param index_name: 索引名
+        :return:
+        """
+        sql = f"ALTER TABLE {table_name} DROP INDEX {index_name};"
+        self._cursor_.execute(sql)
+
+
 
 if __name__ == '__main__':
     run = MySQL("192.168.233.131", 3306, "root", "123456")
-    run.add_column("table_name", "c", "int", 20, is_first=True)
+    run.create_index("test", "name", "name_index")

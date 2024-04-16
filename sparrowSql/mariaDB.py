@@ -523,3 +523,35 @@ class MariaDB(SQl):
             sql += " FIRST"
         self._cursor_.execute(sql)
 
+    def create_index(self, table_name: str, column_name: str, index_name: str):
+        """
+        创建索引
+        :param table_name: 表名
+        :param column_name: 列名
+        :param index_name: 索引名
+        :return:
+        """
+        sql = f"CREATE INDEX {index_name} ON {table_name} ({column_name});"
+        self._cursor_.execute(sql)
+
+    def create_unique_index(self, table_name: str, column_name: str, index_name: str):
+        """
+        创建唯一索引
+        :param table_name: 表名
+        :param column_name: 列名
+        :param index_name: 索引名
+        :return:
+        """
+        sql = f"CREATE UNIQUE INDEX {index_name} ON {table_name} ({column_name});"
+        self._cursor_.execute(sql)
+
+    def drop_index(self, table_name: str, index_name: str):
+        """
+        删除索引
+        :param table_name: 表名
+        :param index_name: 索引名
+        :return:
+        """
+        sql = f"ALTER TABLE {table_name} DROP INDEX {index_name};"
+        self._cursor_.execute(sql)
+

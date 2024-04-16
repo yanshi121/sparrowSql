@@ -132,3 +132,23 @@ class SQl(object):
         print("该方法未被实现")
         pass
 
+    def create_index(self):
+        """
+        创建索引
+        """
+        print("该方法未被实现")
+        pass
+
+    def create_unique_index(self):
+        """
+        创建唯一索引
+        """
+        print("该方法未被实现")
+        pass
+
+    def drop_index(self):
+        """
+        删除索引
+        """
+        print("该方法未被实现")
+        pass
