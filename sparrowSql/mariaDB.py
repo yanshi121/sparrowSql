@@ -555,3 +555,31 @@ class MariaDB(SQl):
         sql = f"ALTER TABLE {table_name} DROP INDEX {index_name};"
         self._cursor_.execute(sql)
 
+    def start_transaction(self):
+        """
+        开始事务
+        :return:
+        """
+        sql = "BEGIN TRANSACTION;"
+        self._cursor_.execute(sql)
+        print("事务开启...")
+
+    def rollback_transaction(self):
+        """
+        回滚事务
+        :return:
+        """
+        sql = "ROLLBACK;"
+        self._cursor_.execute(sql)
+        print("事务回滚...")
+
+    def commit_transaction(self):
+        """
+        提交事务
+        :return:
+        """
+        sql = "COMMIT;"
+        self._cursor_.execute(sql)
+        print("事务提交...")
+
+

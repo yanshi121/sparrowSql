@@ -152,3 +152,24 @@ class SQl(object):
         """
         print("该方法未被实现")
         pass
+
+    def start_transaction(self):
+        """
+        开始事务
+        """
+        print("该方法未被实现")
+        pass
+
+    def rollback_transaction(self):
+        """
+        回滚事务
+        """
+        print("该方法未被实现")
+        pass
+
+    def commit_transaction(self):
+        """
+        提交事务
+        """
+        print("该方法未被实现")
+        pass
