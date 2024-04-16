@@ -1,11 +1,8 @@
 import pymysql
-from sparrowSql.SQL import SQl
 
 
-class MariaDB(SQl):
-
+class MariaDB:
     def __init__(self, host: str, port: int, user: str, passwd: str, db: str = None):
-        SQl.__init__(self)
         self._host_ = host
         self._port_ = port
         self._user_ = user

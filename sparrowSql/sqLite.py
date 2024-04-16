@@ -1,8 +1,7 @@
 import sqlite3
-from sparrowSql.SQL import SQl
 
 
-class SqLite(SQl):
+class SqLite:
     def __init__(self, db_file):
         self._connect_ = sqlite3.connect(db_file)
         self._cursor_ = self._connect_.cursor()
@@ -504,7 +503,7 @@ class SqLite(SQl):
         :param index_name: 索引名
         :return:
         """
-        sql = f"DROP INDEX IF EXISTS {index_name}_on_{table_name};"
+        sql = f"DROP INDEX {index_name}_on_{table_name};"
         self._cursor_.execute(sql)
 
     def start_transaction(self):

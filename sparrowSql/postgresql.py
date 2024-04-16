@@ -1,16 +1,15 @@
-import pymysql
+import psycopg2
 
 
-class MySQL:
-
+class Postgresql:
     def __init__(self, host: str, port: int, user: str, passwd: str, db: str = None):
         self._host_ = host
         self._port_ = port
         self._user_ = user
         self._passwd_ = passwd
         self._db_ = db
-        self._connect_: pymysql.connect = ""
-        self._cursor_: pymysql.connect.cursor = ""
+        self._connect_ = ""
+        self._cursor_ = ""
         self._get_connect_()
 
     def _get_connect_(self):
@@ -19,12 +18,13 @@ class MySQL:
         :return:
         """
         if self._db_ is not None:
-            self._connect_ = pymysql.connect(host=self._host_, user=self._user_, password=self._passwd_,
-                                             port=self._port_)
+            self._connect_ = psycopg2.connect(host=self._host_, user=self._user_, password=self._passwd_,
+                                              port=self._port_)
         else:
-            self._connect_ = pymysql.connect(host=self._host_, user=self._user_, password=self._passwd_,
-                                             port=self._port_, database=self._db_)
+            self._connect_ = psycopg2.connect(host=self._host_, user=self._user_, password=self._passwd_,
+                                              port=self._port_, database=self._db_)
         self._cursor_ = self._connect_.cursor()
+        self._connect_.set_session(autocommit=True)
         if not self._cursor_:
             raise Exception(f"{self._host_}--数据库连接失败")
 
@@ -261,7 +261,7 @@ class MySQL:
             self._table_name_ = table_name
             self._columns_ = []
             self._primary_key_column_ = None
-            self._sql_ = f"CREATE TABLE IF NOT EXISTS `{self._table_name_}` (\n"
+            self._sql_ = f"CREATE TABLE {self._table_name_} (\n"
 
         def column(self, column_name: str):
             """
@@ -356,13 +356,13 @@ class MySQL:
             """
             column_definitions = []
             for column in self._columns_:
-                definition = f"`{column['name']}` {column['type']}({column['length']})"
+                definition = f"{column['name']} {column['type']}({column['length']})"
                 if column['null']:
                     definition += " NOT NULL"
                 if column['primary_key']:
                     definition += " PRIMARY KEY"
                 if column['auto_increment']:
-                    definition += " AUTO_INCREMENT"
+                    definition += " SERIAL"
                 if 'comment' in column and column['comment']:
                     definition += f" COMMENT '{column['comment']}'"
                 column_definitions.append(definition)
@@ -386,15 +386,23 @@ class MySQL:
         """
         return self._CreateTable(self._connect_, self._cursor_, table_name, table_comment=table_comment)
 
-    def create_database(self, database_name, character="utf8mb4", collate="utf8mb4_general_ci"):
+    def create_database(self, database_name, owner=None, encoding="UTF8", tablespace='pg_default',
+                        local_collate='zh_CN.UTF-8', local_ctype='zh_CN.UTF-8', connection_limit=-1):
         """
         创建数据库
+        :param local_collate: 字符排序规则
+        :param connection_limit: 最大并发连接数，-1 表示没有连接限制
+        :param tablespace: 默认表空间
+        :param encoding: 字符编码
+        :param owner: 数据库的所有者
+        :param local_ctype: 字符分类
         :param database_name: 数据库名
-        :param character: 字符集
-        :param collate: 校对规则
         :return:
         """
-        sql = f"CREATE DATABASE IF NOT EXISTS {database_name} CHARACTER SET {character} COLLATE {collate}"
+        if owner is not None:
+            sql = f"CREATE DATABASE {database_name} WITH OWNER = {owner} ENCODING = {encoding} TABLESPACE = {tablespace} LC_COLLATE = '{local_collate}' LC_CTYPE = '{local_ctype}' CONNECTION LIMIT = {connection_limit};"
+        else:
+            sql = f"CREATE DATABASE {database_name} WITH ENCODING = {encoding} TABLESPACE = {tablespace} LC_COLLATE = '{local_collate}' LC_CTYPE = '{local_ctype}' CONNECTION LIMIT = {connection_limit};"
         self._cursor_.execute(sql)
 
     def drop_table(self, table_name):
@@ -411,7 +419,7 @@ class MySQL:
         显示数据库中所有表名
         :return:
         """
-        sql = f"SHOW TABLES;"
+        sql = f"SELECT tablename FROM pg_tables;"
         self._cursor_.execute(sql)
         row = self._cursor_.fetchall()
         return row
@@ -421,7 +429,7 @@ class MySQL:
         显示所有数据库
         :return:
         """
-        sql = f"SHOW DATABASES;"
+        sql = f"SELECT datname FROM pg_database;"
         self._cursor_.execute(sql)
         row = self._cursor_.fetchall()
         return row
@@ -452,12 +460,12 @@ class MySQL:
         :param column: 字段名
         :return:
         """
-        sql = f"ALTER TABLE {table_name} DROP {column};"
+        sql = f"ALTER TABLE {table_name} DROP COLUMN {column};"
         self._cursor_.execute(sql)
 
     def alter_column_type(self, table_name: str, column_name: str, column_type: str, length: int,
-                          is_not_null: bool = True,
-                          is_primary_key: str = False, is_auto_increment: str = False):
+                          is_not_null: bool = True, is_primary_key: str = False, is_auto_increment: str = False,
+                          using: str = None):
         """
         更改表中某字段的类型
         :param table_name: 表名
@@ -475,8 +483,10 @@ class MySQL:
         if is_primary_key:
             constraint += " PRIMARY KEY"
         if is_auto_increment:
-            constraint += " AUTOINCREMENT"
-        sql = f"ALTER TABLE {table_name} MODIFY {column_name} {column_type}({length})"
+            constraint += " SERIAL"
+        if using is not None:
+            constraint += f" USING {using}"
+        sql = f"ALTER TABLE {table_name} ALTER COLUMN {column_name} TYPE {column_type}({length})"
         sql += constraint
         self._cursor_.execute(sql)
 
@@ -490,15 +500,13 @@ class MySQL:
         :param length: 长度
         :return:
         """
-        sql = f"ALTER TABLE {table_name} CHANGE {column_name} {new_column_name} {column_type}({length})"
+        sql = f"ALTER TABLE {table_name} RENAME COLUMN {column_name} TO {new_column_name} {column_type}({length});"
         self._cursor_.execute(sql)
 
     def add_column(self, table_name: str, column_name: str, column_type: str = "varchar", length: int = 255,
-                   is_not_null: bool = True, is_primary_key: str = False, is_auto_increment: str = False,
-                   is_first: bool = False):
+                   is_not_null: bool = True, is_primary_key: str = False, is_auto_increment: str = False):
         """
         向表中新增字段
-        :param is_first: True将新加的属性设置为该表的第一个字段,False将新加的字段置于该表其余字段之后
         :param table_name: 表名
         :param column_name: 字段名
         :param column_type: 字段类型
@@ -514,11 +522,9 @@ class MySQL:
         if is_primary_key:
             constraint += " PRIMARY KEY"
         if is_auto_increment:
-            constraint += " AUTOINCREMENT"
-        sql = f"ALTER TABLE {table_name} ADD {column_name} {column_type}({length})"
+            constraint += " SERIAL"
+        sql = f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}({length})"
         sql += constraint
-        if is_first:
-            sql += " FIRST"
         self._cursor_.execute(sql)
 
     def create_index(self, table_name: str, column_name: str, index_name: str):
@@ -550,7 +556,7 @@ class MySQL:
         :param index_name: 索引名
         :return:
         """
-        sql = f"ALTER TABLE {table_name} DROP INDEX {index_name};"
+        sql = f"DROP INDEX {index_name};"
         self._cursor_.execute(sql)
 
     def start_transaction(self):
@@ -581,7 +587,7 @@ class MySQL:
         print("事务提交...")
 
 
-
 if __name__ == '__main__':
-    run = MySQL("192.168.233.131", 3306, "root", "123456")
-    run.create_index("test", "name", "name_index")
+    app = Postgresql("192.168.233.131", 5432, "postgres", "aDYLL121380O!", "postgres")
+    app.drop_table("test")
+    print(app.show_table())
