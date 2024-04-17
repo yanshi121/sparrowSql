@@ -205,8 +205,7 @@ class MySQL:
         return row
 
     def select_page(self, table: str, conditions: dict = None, columns: list = None, page_size: int = 20,
-                    page_index: int = 0,
-                    sort_column: str = None, sort_method: str = ""):
+                    page_index: int = 0, sort_column: str = None, sort_method: str = "asc"):
         """
         分页查询
         :param table: 表名
