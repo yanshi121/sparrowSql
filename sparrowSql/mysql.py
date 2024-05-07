@@ -579,8 +579,5 @@ class MySQL:
         self._cursor_.execute(sql)
         print("事务提交...")
 
-
-
 if __name__ == '__main__':
     run = MySQL("192.168.233.131", 3306, "root", "123456")
-    run.create_index("test", "name", "name_index")

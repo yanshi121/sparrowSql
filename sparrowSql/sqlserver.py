@@ -384,8 +384,26 @@ class SqlServer:
         self._cursor_.execute(sql, params)
         row = self._cursor_.fetchall()
         return row
+    
+    def delete(self, table: str, conditions: dict):
+        """
+        删除数据
+        :param table: 表名
+        :param conditions: 删除参数
+        :return:
+        """
+        if type(conditions) != dict:
+            raise Exception(f"conditions {conditions} type is not dict")
+        delete_str = ""
+        params = ()
+        for column, value in conditions.items():
+            params += (value,)
+            delete_str += f"{column}=? and "
+        sql = f"delete from {table} where {delete_str[:-5]};"
+        self._cursor_.execute(sql, params)
 
 
 if __name__ == '__main__':
     app = SqlServer("192.168.233.131", "1433", "sa", "aDYLL121380O!")
-    print(app.select_page("test", 'id'))
+    app.delete("test", {'id': 1})
+    app.commit()
