@@ -557,7 +557,7 @@ class MySQL:
         开始事务
         :return:
         """
-        sql = "BEGIN TRANSACTION;"
+        sql = "BEGIN WORK;"
         self._cursor_.execute(sql)
         print("事务开启...")
 
@@ -578,6 +578,21 @@ class MySQL:
         sql = "COMMIT;"
         self._cursor_.execute(sql)
         print("事务提交...")
+
+    def get_cursor(self):
+        """
+        返回游标
+        :return:
+        """
+        return self._cursor_
+
+    def get_connection(self):
+        """
+        返回连接
+        :return:
+        """
+        return self._connect_
+
 
 if __name__ == '__main__':
     run = MySQL("192.168.233.131", 3306, "root", "123456")
