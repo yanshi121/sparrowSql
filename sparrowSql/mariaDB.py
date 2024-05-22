@@ -17,7 +17,7 @@ class MariaDB:
         获取数据库连接
         :return:
         """
-        if self._db_ is not None:
+        if self._db_ is None:
             self._connect_ = pymysql.connect(host=self._host_, user=self._user_, password=self._passwd_,
                                              port=self._port_)
         else:
