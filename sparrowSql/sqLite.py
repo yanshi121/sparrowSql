@@ -339,17 +339,6 @@ class SqLite:
         """
         return self._CreateTable(self._connect_, self._cursor_, table_name, table_comment=table_comment)
 
-    def create_database(self, database_name, character="utf8mb4", collate="utf8mb4_general_ci"):
-        """
-        创建数据库
-        :param database_name: 数据库名
-        :param character: 字符集
-        :param collate: 校对规则
-        :return:
-        """
-        sql = f"CREATE DATABASE IF NOT EXISTS {database_name} CHARACTER SET {character} COLLATE {collate}"
-        self._cursor_.execute(sql)
-
     def drop_table(self, table_name):
         """
         删除表
@@ -364,29 +353,10 @@ class SqLite:
         显示数据库中所有表名
         :return:
         """
-        sql = f"SHOW TABLES;"
+        sql = f"SELECT name FROM sqlite_master WHERE type='table';"
         self._cursor_.execute(sql)
         row = self._cursor_.fetchall()
         return row
-
-    def show_database(self):
-        """
-        显示所有数据库
-        :return:
-        """
-        sql = f"SHOW DATABASES;"
-        self._cursor_.execute(sql)
-        row = self._cursor_.fetchall()
-        return row
-
-    def drop_database(self, database_name):
-        """
-        删除数据库
-        :param database_name: 数据库名
-        :return:
-        """
-        sql = f"DROP DATABASE IF EXISTS {database_name}"
-        self._cursor_.execute(sql)
 
     def alter_table_name(self, table_name, new_table_name):
         """
