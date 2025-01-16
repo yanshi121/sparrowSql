@@ -1,32 +1,37 @@
 import psycopg2
+from dbutils.pooled_db import PooledDB
+
+from sparrowSql.tools import PostgresqlCreateTable, ConditionsBuilder, SelectConditionsBuilder
 
 
 class Postgresql:
-    def __init__(self, host: str, port: int, user: str, passwd: str, db: str = None):
+    def __init__(self, host: str, port: int, user: str, passwd: str, db: str = None, max_connections: int = 50):
+        """
+        SparrowSql for Postgresql
+        :param host: 数据库地址
+        :param port: 数据库端口
+        :param user: 操作用户
+        :param passwd: 用户密码
+        :param db: 数据库名称
+        :param max_connections: 最大连接数
+        """
         self._host_ = host
         self._port_ = port
         self._user_ = user
         self._passwd_ = passwd
         self._db_ = db
-        self._connect_ = ""
-        self._cursor_ = ""
-        self._get_connect_()
-
-    def _get_connect_(self):
-        """
-        获取数据库连接
-        :return:
-        """
-        if self._db_ is not None:
-            self._connect_ = psycopg2.connect(host=self._host_, user=self._user_, password=self._passwd_,
-                                              port=self._port_)
-        else:
-            self._connect_ = psycopg2.connect(host=self._host_, user=self._user_, password=self._passwd_,
-                                              port=self._port_, database=self._db_)
-        self._cursor_ = self._connect_.cursor()
-        self._connect_.set_session(autocommit=True)
-        if not self._cursor_:
-            raise Exception(f"{self._host_}--数据库连接失败")
+        self._max_connections_ = max_connections
+        self._pool_ = PooledDB(
+            creator=psycopg2,
+            maxconnections=self._max_connections_,
+            **{
+                'host': self._host_,
+                'port': self._port_,
+                'user': self._user_,
+                'password': self._passwd_,
+                'database': self._db_
+            }
+        )
 
     def connect_information(self):
         """
@@ -41,29 +46,6 @@ class Postgresql:
             "db": self._db_
         }
 
-    def close(self):
-        """
-        关闭游标和连接
-        :return:
-        """
-        self._cursor_.close()
-        self._connect_.close()
-
-    def commit(self):
-        """
-        提交
-        :return:
-        """
-        self._connect_.commit()
-
-    def commit_close(self):
-        """
-        提交并关闭
-        :return:
-        """
-        self.commit()
-        self.close()
-
     def user_defined_sql(self, sql: str, params: tuple = None):
         """
         运行自定义SQL\n
@@ -73,11 +55,16 @@ class Postgresql:
         :param params: 参数，输入参数为参数化查询
         :return:
         """
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
         if params is None:
-            self._cursor_.execute(sql)
+            cursor.execute(sql)
         else:
-            self._cursor_.execute(sql, params)
-        row = self._cursor_.fetchall()
+            cursor.execute(sql, params)
+        row = cursor.fetchall()
+        connect.commit()
+        cursor.close()
+        connect.close()
         return row
 
     def insert(self, table: str, columns: list, values: list):
@@ -105,7 +92,12 @@ class Postgresql:
                     raise Exception(f"{columns}->{len(columns)} != {value}->{len(value)}")
             values = ", ".join(value_list)
             sql = f"insert into {table} {column} values {values};"
-            self._cursor_.execute(sql, params)
+            connect = self._pool_.connection()
+            cursor = connect.cursor()
+            cursor.execute(sql, params)
+            connect.commit()
+            cursor.close()
+            connect.close()
             return sql
         else:
             params = ()
@@ -114,264 +106,59 @@ class Postgresql:
                     params += (value_s,)
                 values = "(" + ", ".join(["%s" for i in values]) + ")"
                 sql = f"insert into {table} {column} values {values};"
-                self._cursor_.execute(sql, params)
+                connect = self._pool_.connection()
+                cursor = connect.cursor()
+                cursor.execute(sql, params)
+                connect.commit()
+                cursor.close()
+                connect.close()
                 return sql
             else:
                 raise Exception(f"{columns}->{len(columns)} != {values}->{len(values)}")
 
-    def update(self, table: str, columns_values: dict, conditions: dict):
+    def update(self, table: str, columns_values: dict):
         """
         更新数据
         :param table: 表名
         :param columns_values: 修改的数据
-        :param conditions: 条件参数
         :return:
         """
-        if type(columns_values) != dict:
-            raise Exception(f"columns_values {columns_values} type is not dict")
-        if type(conditions) != dict:
-            raise Exception(f"conditions {conditions} type is not dict")
-        set_str = ""
-        where_str = ""
-        params = ()
-        for column, value in columns_values.items():
-            if value != "":
-                params += (value,)
-                set_str += f"{column}=%s,"
-        if len(conditions) != 0:
-            where_str += "where "
-            for condition_key, condition_value in conditions.items():
-                if condition_value != '':
-                    params += (condition_value,)
-                    where_str += f"{condition_key}=%s and "
-        sql = f"update {table} set {set_str[:-1]} {where_str[:-5]};"
-        self._cursor_.execute(sql, params)
+        if type(columns_values) is not dict:
+            raise TypeError(f"columns_values {columns_values} type is not dict")
+        cvs = ', '.join([f"{k}='{v}'" for k, v in columns_values.items()])
+        head_sql = f"UPDATE {table} SET {cvs} "
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        return ConditionsBuilder(head_sql, cursor, connect)
 
-    def delete(self, table: str, conditions: dict):
+    def delete(self, table: str):
         """
         删除数据
         :param table: 表名
-        :param conditions: 删除参数
         :return:
         """
-        if type(conditions) != dict:
-            raise Exception(f"conditions {conditions} type is not dict")
-        delete_str = ""
-        params = ()
-        for column, value in conditions.items():
-            params += (value,)
-            delete_str += f"{column}=%s and "
-        sql = f"delete from {table} where {delete_str[:-5]};"
-        self._cursor_.execute(sql, params)
+        head_sql = f"DELETE FROM {table}"
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        return ConditionsBuilder(head_sql, cursor, connect)
 
-    def select(self, table: str, conditions: dict = None, columns: list = None, sort_column: str = None,
-               sort_method: str = "asc"):
+    def select(self, table: str, columns: list = None):
         """
         查询数据
         :param table: 表名
-        :param conditions: 查询条件，不输入默认为全部
-        :param columns: 字段名，不输入默认为所有字段
-        :param sort_column: 需要排序的字段
-        :param sort_method: 排序方法，默认为asc升序，desc为降序
-        :return:
-        """
-        params = ()
-        if columns is not None:
-            if type(conditions) != dict:
-                raise Exception(f"conditions {conditions} type is not dict")
-        if columns is None:
-            column_str = "*"
-        else:
-            if type(columns) != list:
-                raise Exception(f"columns {columns} type is not list")
-            column_str = ",".join(columns)
-        condition_str = ""
-        if conditions is not None:
-            for column, value in conditions.items():
-                params += (value,)
-                condition_str += f"{column}=%s and "
-            condition_str = condition_str[:-5]
-            sql = f"select {column_str} from {table} where {condition_str}"
-        else:
-            sql = f"select {column_str} from {table}"
-        if sort_column is not None:
-            if sort_method == "asc":
-                sql += f" order by {sort_column} asc"
-            elif sort_method == "desc":
-                sql += f" order by {sort_column} desc"
-        sql += ";"
-        self._cursor_.execute(sql, params)
-        row = self._cursor_.fetchall()
-        return row
-
-    def select_page(self, table: str, conditions: dict = None, columns: list = None, page_size: int = 20,
-                    page_index: int = 0,
-                    sort_column: str = None, sort_method: str = ""):
-        """
-        分页查询
-        :param table: 表名
-        :param conditions: 查询参数。默认为全部
         :param columns: 字段名，默认为全部
-        :param page_size: 分页大小，默认20
-        :param page_index: 当前页码，默认为0
-        :param sort_column: 排序字段
-        :param sort_method: 排序方法，默认为asc升序，desc为降序
         :return:
         """
-        params = ()
-        if conditions is not None:
-            if type(conditions) != dict:
-                raise Exception(f"conditions {conditions} type is not dict")
+        if columns is not None and type(columns) is not list:
+            raise TypeError(f"columns {columns} type is not dict")
         if columns is None:
-            column_str = "*"
+            columns_str = "*"
         else:
-            if type(columns) != list:
-                raise Exception(f"columns {columns} type is not list")
-            column_str = ",".join(columns)
-        condition_str = ""
-        if conditions is not None:
-            for column, value in conditions.items():
-                params += (value,)
-                condition_str += f"{column}=%s and "
-            condition_str = condition_str[:-5]
-            sql = f"select {column_str} from {table} where {condition_str}"
-        else:
-            sql = f"select {column_str} from {table}"
-        if sort_column is not None:
-            if sort_method == "asc":
-                sql += f" order by {sort_column} asc"
-            elif sort_method == "desc":
-                sql += f" order by {sort_column} desc"
-        page_index = page_index * page_size
-        params += (page_size, page_index)
-        sql += f" limit %s offset %s"
-        self._cursor_.execute(sql, params)
-        row = self._cursor_.fetchall()
-        return row
-
-    class _CreateTable:
-        """
-        创建表的类
-        """
-
-        def __init__(self, connect, cursor, table_name: str, table_comment: str = None):
-            self._connect_ = connect
-            self._table_comment_ = table_comment
-            self._cursor_ = cursor
-            self._table_name_ = table_name
-            self._columns_ = []
-            self._primary_key_column_ = None
-            self._sql_ = f"CREATE TABLE {self._table_name_} (\n"
-
-        def column(self, column_name: str):
-            """
-            初始化字段
-            :param column_name: 字段名
-            :return:
-            """
-            for column in self._columns_:
-                if column_name in column.values():
-                    raise Exception(f"Column {column_name} already exists")
-            column = {
-                "name": column_name,
-                "type": "varchar",
-                "length": 255,
-                "null": False,
-                "primary_key": False,
-                "auto_increment": False
-            }
-            self._columns_.append(column)
-            return self._ColumnBuilder(self, column)
-
-        class _ColumnBuilder:
-            """
-            为字段添加参数
-            """
-
-            def __init__(self, parent, column):
-                self._parent_ = parent
-                self._column_ = column
-
-            def type(self, column_type: str):
-                """
-                添加字段类型
-                :param column_type: 输入数据库支持的类型
-                :return:
-                """
-                self._column_["type"] = column_type
-                return self
-
-            def length(self, length: int):
-                """
-                添加字段长度
-                :param length:
-                :return:
-                """
-                self._column_["length"] = length
-                return self
-
-            def is_not_null(self, is_nullable: bool = True):
-                """
-                添加点断是否为不能空
-                :param is_nullable: 输入False为可空，默认为True
-                :return:
-                """
-                self._column_["null"] = is_nullable
-                return self
-
-            def primary_key(self):
-                """
-                添加字段是否是关键字
-                :return:
-                """
-                if self._parent_._primary_key_column_ is not None:
-                    raise ValueError("Only one primary key column can be set.")
-                self._column_["primary_key"] = True
-                self._parent_._primary_key_column_ = self._column_
-                return self
-
-            def auto_increment(self):
-                """
-                添加字段是否自增
-                :return:
-                """
-                if self._column_["type"] != "int":
-                    raise ValueError("Auto-increment can only be used with integer columns.")
-                self._column_["auto_increment"] = True
-                return self
-
-            def comment(self, column_comment):
-                """
-                添加字段的注释
-                :param column_comment:
-                :return:
-                """
-                self._column_["comment"] = column_comment
-                return self
-
-        def build(self):
-            """
-            构建SQL并执行
-            :return:
-            """
-            column_definitions = []
-            for column in self._columns_:
-                definition = f"{column['name']} {column['type']}({column['length']})"
-                if column['null']:
-                    definition += " NOT NULL"
-                if column['primary_key']:
-                    definition += " PRIMARY KEY"
-                if column['auto_increment']:
-                    definition += " SERIAL"
-                if 'comment' in column and column['comment']:
-                    definition += f" COMMENT '{column['comment']}'"
-                column_definitions.append(definition)
-            self._sql_ += ",\n".join(column_definitions)
-            self._sql_ += "\n)"
-            if self._table_comment_ is not None:
-                self._sql_ += f"COMMENT='{self._table_comment_}'"
-            self._cursor_.execute(self._sql_)
-            self._connect_.commit()
+            columns_str = ", ".join(columns)
+        head_sql = f"SELECT {columns_str} FROM {table}"
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        return SelectConditionsBuilder(head_sql, cursor, connect)
 
     def create_table(self, table_name, table_comment=None):
         """
@@ -384,7 +171,9 @@ class Postgresql:
         :param table_comment: 表的备注
         :return:
         """
-        return self._CreateTable(self._connect_, self._cursor_, table_name, table_comment=table_comment)
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        return PostgresqlCreateTable(connect, cursor, table_name, table_comment=table_comment)
 
     def create_database(self, database_name, owner=None, encoding="UTF8", tablespace='pg_default',
                         local_collate='zh_CN.UTF-8', local_ctype='zh_CN.UTF-8', connection_limit=-1):
@@ -403,7 +192,12 @@ class Postgresql:
             sql = f"CREATE DATABASE {database_name} WITH OWNER = {owner} ENCODING = {encoding} TABLESPACE = {tablespace} LC_COLLATE = '{local_collate}' LC_CTYPE = '{local_ctype}' CONNECTION LIMIT = {connection_limit};"
         else:
             sql = f"CREATE DATABASE {database_name} WITH ENCODING = {encoding} TABLESPACE = {tablespace} LC_COLLATE = '{local_collate}' LC_CTYPE = '{local_ctype}' CONNECTION LIMIT = {connection_limit};"
-        self._cursor_.execute(sql)
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        cursor.execute(sql)
+        connect.commit()
+        cursor.close()
+        connect.close()
 
     def drop_table(self, table_name):
         """
@@ -412,7 +206,12 @@ class Postgresql:
         :return:
         """
         sql = f"DROP TABLE IF EXISTS {table_name};"
-        self._cursor_.execute(sql)
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        connect.commit()
+        cursor.close()
+        connect.close()
+        cursor.execute(sql)
 
     def show_table(self):
         """
@@ -420,8 +219,13 @@ class Postgresql:
         :return:
         """
         sql = f"SELECT tablename FROM pg_tables;"
-        self._cursor_.execute(sql)
-        row = self._cursor_.fetchall()
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        cursor.execute(sql)
+        row = cursor.fetchall()
+        connect.commit()
+        cursor.close()
+        connect.close()
         return row
 
     def show_database(self):
@@ -430,8 +234,13 @@ class Postgresql:
         :return:
         """
         sql = f"SELECT datname FROM pg_database;"
-        self._cursor_.execute(sql)
-        row = self._cursor_.fetchall()
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        cursor.execute(sql)
+        row = cursor.fetchall()
+        connect.commit()
+        cursor.close()
+        connect.close()
         return row
 
     def drop_database(self, database_name):
@@ -441,7 +250,12 @@ class Postgresql:
         :return:
         """
         sql = f"DROP DATABASE IF EXISTS {database_name}"
-        self._cursor_.execute(sql)
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        cursor.execute(sql)
+        connect.commit()
+        cursor.close()
+        connect.close()
 
     def alter_table_name(self, table_name, new_table_name):
         """
@@ -451,7 +265,12 @@ class Postgresql:
         :return:
         """
         sql = f"ALTER TABLE {table_name} RENAME TO {new_table_name}"
-        self._cursor_.execute(sql)
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        cursor.execute(sql)
+        connect.commit()
+        cursor.close()
+        connect.close()
 
     def drop_column(self, table_name, column):
         """
@@ -461,7 +280,12 @@ class Postgresql:
         :return:
         """
         sql = f"ALTER TABLE {table_name} DROP COLUMN {column};"
-        self._cursor_.execute(sql)
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        cursor.execute(sql)
+        connect.commit()
+        cursor.close()
+        connect.close()
 
     def alter_column_type(self, table_name: str, column_name: str, column_type: str, length: int,
                           is_not_null: bool = True, is_primary_key: str = False, is_auto_increment: str = False,
@@ -488,7 +312,12 @@ class Postgresql:
             constraint += f" USING {using}"
         sql = f"ALTER TABLE {table_name} ALTER COLUMN {column_name} TYPE {column_type}({length})"
         sql += constraint
-        self._cursor_.execute(sql)
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        cursor.execute(sql)
+        connect.commit()
+        cursor.close()
+        connect.close()
 
     def alter_column_name(self, table_name: str, column_name: str, new_column_name: str, column_type: str, length: int):
         """
@@ -501,7 +330,12 @@ class Postgresql:
         :return:
         """
         sql = f"ALTER TABLE {table_name} RENAME COLUMN {column_name} TO {new_column_name} {column_type}({length});"
-        self._cursor_.execute(sql)
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        cursor.execute(sql)
+        connect.commit()
+        cursor.close()
+        connect.close()
 
     def add_column(self, table_name: str, column_name: str, column_type: str = "varchar", length: int = 255,
                    is_not_null: bool = True, is_primary_key: str = False, is_auto_increment: str = False):
@@ -525,7 +359,12 @@ class Postgresql:
             constraint += " SERIAL"
         sql = f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}({length})"
         sql += constraint
-        self._cursor_.execute(sql)
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        cursor.execute(sql)
+        connect.commit()
+        cursor.close()
+        connect.close()
 
     def create_index(self, table_name: str, column_name: str, index_name: str):
         """
@@ -536,7 +375,12 @@ class Postgresql:
         :return:
         """
         sql = f"CREATE INDEX {index_name} ON {table_name} ({column_name});"
-        self._cursor_.execute(sql)
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        cursor.execute(sql)
+        connect.commit()
+        cursor.close()
+        connect.close()
 
     def create_unique_index(self, table_name: str, column_name: str, index_name: str):
         """
@@ -547,7 +391,12 @@ class Postgresql:
         :return:
         """
         sql = f"CREATE UNIQUE INDEX {index_name} ON {table_name} ({column_name});"
-        self._cursor_.execute(sql)
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        cursor.execute(sql)
+        connect.commit()
+        cursor.close()
+        connect.close()
 
     def drop_index(self, table_name: str, index_name: str):
         """
@@ -557,37 +406,56 @@ class Postgresql:
         :return:
         """
         sql = f"DROP INDEX {index_name};"
-        self._cursor_.execute(sql)
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        cursor.execute(sql)
+        connect.commit()
+        cursor.close()
+        connect.close()
 
-    def start_transaction(self):
+    def show_model(self):
         """
-        开始事务
+        显示模式列表
         :return:
         """
-        sql = "BEGIN TRANSACTION;"
-        self._cursor_.execute(sql)
-        print("事务开启...")
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        sql = f"SELECT SCHEMA_NAME FROM information_schema.schemata;;"
+        cursor.execute(sql)
+        row = cursor.fetchall()
+        connect.commit()
+        cursor.close()
+        connect.close()
+        return row
 
-    def rollback_transaction(self):
+    def show_table_by_database_name(self, name: str):
         """
-        回滚事务
+        显示指定数据库的表
+        :param name: 数据库名
         :return:
         """
-        sql = "ROLLBACK;"
-        self._cursor_.execute(sql)
-        print("事务回滚...")
+        connect = self._pool_.connection()
+        cursor = connect.cursor()
+        sql = f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{name}';"
+        cursor.execute(sql)
+        row = cursor.fetchall()
+        connect.commit()
+        cursor.close()
+        connect.close()
+        return row
 
-    def commit_transaction(self):
-        """
-        提交事务
-        :return:
-        """
-        sql = "COMMIT;"
-        self._cursor_.execute(sql)
-        print("事务提交...")
-
-
-if __name__ == '__main__':
-    app = Postgresql("192.168.233.131", 5432, "postgres", "aDYLL121380O!", "postgres")
-    app.drop_table("test")
-    print(app.show_table())
+    def show_columns(self, database, table: str):
+        columns = ["COLUMN_NAME", "DATA_TYPE"]
+        dt = self.select("INFORMATION_SCHEMA.COLUMNS", columns).multi_condition_query(
+            [{"name": "TABLE_SCHEMA",
+              "value": database,
+              "logical_condition": "and",
+              "judgement_condition": "="
+              },
+             {"name": "TABLE_NAME ",
+              "value": table,
+              "logical_condition": "and",
+              "judgement_condition": "="
+              }
+             ]).run()
+        return dt

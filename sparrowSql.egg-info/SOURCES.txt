@@ -1,0 +1,15 @@
+setup.py
+sparrowSql/__init__.py
+sparrowSql/mariaDB.py
+sparrowSql/mysql.py
+sparrowSql/oracle.py
+sparrowSql/postgresql.py
+sparrowSql/sparrow.py
+sparrowSql/sqLite.py
+sparrowSql/sqlserver.py
+sparrowSql.egg-info/PKG-INFO
+sparrowSql.egg-info/SOURCES.txt
+sparrowSql.egg-info/dependency_links.txt
+sparrowSql.egg-info/requires.txt
+sparrowSql.egg-info/top_level.txt
+sparrowSql/tools/__init__.py

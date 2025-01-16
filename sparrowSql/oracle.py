@@ -1,10 +1,10 @@
-import pymysql
+import oracledb
 from dbutils.pooled_db import PooledDB
 
-from sparrowSql.tools import ConditionsBuilder, SelectConditionsBuilder, MySQLCreateTable
+from sparrowSql.tools import ConditionsBuilder, MySQLCreateTable, OracleSelectConditionsBuilder
 
 
-class MySQL:
+class Oracle:
 
     def __init__(self, host: str, port: int, user: str, passwd: str, db: str = None, max_connections: int = 50):
         """
@@ -23,16 +23,27 @@ class MySQL:
         self._db_ = db
         self._max_connections_ = max_connections
         self._pool_ = PooledDB(
-            creator=pymysql,
+            creator=oracledb,
             maxconnections=self._max_connections_,
             **{
-                'host': self._host_,
-                'port': self._port_,
+                'dsn': f'{self._host_}:{self._port_}/FREE',
                 'user': self._user_,
-                'password': self._passwd_,
-                'database': self._db_
+                'password': self._passwd_
             }
         )
+
+    def get_connection(self):
+        conn = self._pool_.connection()
+        cursor = conn.cursor()
+        if self._db_ is not None:
+            try:
+                # 使用参数化查询防止SQL注入
+                cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {self._db_}")
+            finally:
+                cursor.close()
+            return conn
+        else:
+            return conn
 
     def connect_information(self):
         """
@@ -56,7 +67,7 @@ class MySQL:
         :param params: 参数，输入参数为参数化查询
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         if params is None:
             cursor.execute(sql)
@@ -93,7 +104,7 @@ class MySQL:
                     raise ValueError(f"{columns}->{len(columns)} != {value}->{len(value)}")
             values = ", ".join(value_list)
             sql = f"insert into {table} {column} values {values};"
-            connect = self._pool_.connection()
+            connect = self.get_connection()
             cursor = connect.cursor()
             cursor.execute(sql, params)
             connect.commit()
@@ -107,7 +118,7 @@ class MySQL:
                     params += (value_s,)
                 values = "(" + ", ".join(["%s" for i in values]) + ")"
                 sql = f"insert into {table} {column} values {values};"
-                connect = self._pool_.connection()
+                connect = self.get_connection()
                 cursor = connect.cursor()
                 cursor.execute(sql, params)
                 connect.commit()
@@ -128,7 +139,7 @@ class MySQL:
             raise TypeError(f"columns_values {columns_values} type is not dict")
         cvs = ', '.join([f"{k}='{v}'" for k, v in columns_values.items()])
         head_sql = f"UPDATE {table} SET {cvs} "
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         return ConditionsBuilder(head_sql, cursor, connect)
 
@@ -138,7 +149,7 @@ class MySQL:
         :param table: 表名
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         head_sql = f"DELETE FROM {table}"
         return ConditionsBuilder(head_sql, cursor, connect)
@@ -157,9 +168,9 @@ class MySQL:
         else:
             columns_str = ", ".join(columns)
         head_sql = f"SELECT {columns_str} FROM {table}"
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
-        return SelectConditionsBuilder(head_sql, cursor, connect)
+        return OracleSelectConditionsBuilder(head_sql, cursor, connect, columns)
 
     def create_table(self, table_name, table_comment=None):
         """
@@ -172,7 +183,7 @@ class MySQL:
         :param table_comment: 表的备注
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         return MySQLCreateTable(connect, cursor, table_name, table_comment=table_comment)
 
@@ -184,7 +195,7 @@ class MySQL:
         :param collate: 校对规则
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         sql = f"CREATE DATABASE IF NOT EXISTS {database_name} CHARACTER SET {character} COLLATE {collate}"
         cursor.execute(sql)
@@ -198,7 +209,7 @@ class MySQL:
         :param table_name: 表名
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         sql = f"DROP TABLE IF EXISTS {table_name};"
         cursor.execute(sql)
@@ -211,9 +222,9 @@ class MySQL:
         显示数据库中所有表名
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
-        sql = f"SHOW TABLES;"
+        sql = f"SELECT table_name FROM DBA_TABLES"
         cursor.execute(sql)
         row = cursor.fetchall()
         connect.commit()
@@ -227,9 +238,9 @@ class MySQL:
         :param name: 数据库名
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
-        sql = f"SELECT TABLE_NAME AS '表名' FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{name}';"
+        sql = f"SELECT table_name FROM DBA_TABLES WHERE owner = '{name}'"
         cursor.execute(sql)
         row = cursor.fetchall()
         connect.commit()
@@ -242,9 +253,9 @@ class MySQL:
         显示所有数据库
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
-        sql = f"SHOW DATABASES;"
+        sql = f"SELECT username FROM ALL_USERS"
         cursor.execute(sql)
         row = cursor.fetchall()
         connect.commit()
@@ -258,7 +269,7 @@ class MySQL:
         :param database_name: 数据库名
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         sql = f"DROP DATABASE IF EXISTS {database_name}"
         cursor.execute(sql)
@@ -273,7 +284,7 @@ class MySQL:
         :param new_table_name: 新的表名
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         sql = f"ALTER TABLE {table_name} RENAME TO {new_table_name}"
         cursor.execute(sql)
@@ -288,7 +299,7 @@ class MySQL:
         :param column: 字段名
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         sql = f"ALTER TABLE {table_name} DROP {column};"
         cursor.execute(sql)
@@ -309,7 +320,7 @@ class MySQL:
         :param is_auto_increment: 是否自增
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         constraint = ""
         if is_not_null:
@@ -335,7 +346,7 @@ class MySQL:
         :param length: 长度
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         sql = f"ALTER TABLE {table_name} CHANGE {column_name} {new_column_name} {column_type}({length})"
         cursor.execute(sql)
@@ -358,7 +369,7 @@ class MySQL:
         :param is_auto_increment: 是否自增
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         constraint = ""
         if is_not_null:
@@ -384,7 +395,7 @@ class MySQL:
         :param index_name: 索引名
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         sql = f"CREATE INDEX {index_name} ON {table_name} ({column_name});"
         cursor.execute(sql)
@@ -400,7 +411,7 @@ class MySQL:
         :param index_name: 索引名
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         sql = f"CREATE UNIQUE INDEX {index_name} ON {table_name} ({column_name});"
         cursor.execute(sql)
@@ -415,7 +426,7 @@ class MySQL:
         :param index_name: 索引名
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         sql = f"ALTER TABLE {table_name} DROP INDEX {index_name};"
         cursor.execute(sql)
@@ -428,36 +439,17 @@ class MySQL:
         返回游标
         :return:
         """
-        connect = self._pool_.connection()
+        connect = self.get_connection()
         cursor = connect.cursor()
         return cursor
 
-    def get_connection(self):
-        """
-        返回连接
-        :return:
-        """
-        connect = self._pool_.connection()
-        return connect
-
     def show_columns(self, database, table: str):
-        """
-        获取某张表的所有字段
-        :param database: 数据库名
-        :param table: 表名
-        :return:
-        """
-        columns = ["COLUMN_NAME", "DATA_TYPE"]
-        dt = self.select("INFORMATION_SCHEMA.COLUMNS", columns).multi_condition_query(
-            [{"name": "TABLE_SCHEMA",
-              "value": database,
-              "logical_condition": "and",
-              "judgement_condition": "="
-              },
-             {"name": "TABLE_NAME ",
-              "value": table,
-              "logical_condition": "and",
-              "judgement_condition": "="
-              }
-             ]).run()
-        return dt
+        sql = f"SELECT column_name, data_type FROM DBA_TAB_COLUMNS WHERE owner = '{database}' AND table_name = '{table}'"
+        connect = self.get_connection()
+        cursor = connect.cursor()
+        cursor.execute(sql)
+        row = cursor.fetchall()
+        connect.commit()
+        cursor.close()
+        connect.close()
+        return row

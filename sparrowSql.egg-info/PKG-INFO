@@ -1,0 +1,1093 @@
+Metadata-Version: 2.2
+Name: sparrowSql
+Version: 0.1.6
+Summary: 基于各数据库连接包的二次开发SQL连接工具
+Home-page: https://github.com/yanshi121/sparrowSql
+Author: 39
+Author-email: DY39project@outlook.com
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX :: Linux
+Requires-Python: >=3.5
+Description-Content-Type: text/markdown
+Requires-Dist: pymysql
+Requires-Dist: dbutils
+Requires-Dist: oracledb
+Requires-Dist: psycopg2
+Requires-Dist: requests
+Requires-Dist: sqlite3
+Requires-Dist: pyodbc
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# sparrowSql
+
+## 目录
+
+- [简介](#简介)
+- [安装](#安装)
+- [数据库连接类](#数据库连接类)
+    - [MariaDB](#mariadb)
+    - [MySQL](#mysql)
+    - [Oracle](#oracle)
+    - [Postgresql](#postgresql)
+    - [SqLite](#sqlite)
+    - [SqlServer](#sqlserver)
+    - [Sparrow](#sparrow)
+- [方法适用列表](#方法适用列表)
+- [SQL条件构建器功能介绍](#SQL条件构建器功能介绍)
+    - [单表查询条件](#单表查询条件)
+        - [and_between](#and_between)
+        - [or_between](#or_between)
+        - [and_equal](#and_equal)
+        - [or_equal](#or_equal)
+        - [and_unequal](#and_unequal)
+        - [or_unequal](#or_unequal)
+        - [and_equal_greater](#and_equal_greater)
+        - [or_equal_greater](#or_equal_greater)
+        - [and_equal_less](#and_equal_less)
+        - [or_unequal_less](#or_unequal_less)
+        - [and_greater](#and_greater)
+        - [or_greater](#or_greater)
+        - [and_less](#and_less)
+        - [or_less](#or_less)
+        - [and_like_start](#and_like_start)
+        - [or_like_start](#or_like_start)
+        - [and_like_end](#and_like_end)
+        - [or_like_end](#or_like_end)
+        - [and_like](#and_like)
+        - [or_like](#or_like)
+        - [and_in](#and_in)
+        - [or_in](#or_in)
+        - [and_not_in](#and_not_in)
+        - [or_not_in](#or_not_in)
+        - [and_is_null](#and_is_null)
+        - [or_is_null](#or_is_null)
+        - [and_is_not_null](#and_is_not_null)
+        - [or_is_not_null](#or_is_not_null)
+- [跨表查询条件](#跨表查询条件)
+    - [and_between_cross_table](#and_between_cross_table)
+    - [or_between_cross_table](#or_between_cross_table)
+    - [and_equal_cross_table](#and_equal_cross_table)
+    - [or_equal_cross_table](#or_equal_cross_table)
+    - [and_unequal_cross_table](#and_unequal_cross_table)
+    - [or_unequal_cross_table](#or_unequal_cross_table)
+    - [and_equal_greater_cross_table](#and_equal_greater_cross_table)
+    - [or_equal_greater_cross_table](#or_equal_greater_cross_table)
+    - [and_equal_less_cross_table](#and_equal_less_cross_table)
+    - [or_unequal_less_cross_table](#or_unequal_less_cross_table)
+    - [and_greater_cross_table](#and_greater_cross_table)
+    - [or_greater_cross_table](#or_greater_cross_table)
+    - [and_less_cross_table](#and_less_cross_table)
+    - [or_less_cross_table](#or_less_cross_table)
+    - [and_in_cross_table](#and_in_cross_table)
+    - [or_in_cross_table](#or_in_cross_table)
+    - [and_not_in_cross_table](#and_not_in_cross_table)
+    - [or_not_in_cross_table](#or_not_in_cross_table)
+- [其他](#其他)
+    - [multi_condition_query](#multi_condition_query)
+    - [sort](#sort)
+    - [group_by](#group_by)
+    - [limit](#limit)
+    - [run](#run)
+- [表创建](#表创建)
+    - [字段设置](#字段设置)
+        - [column](#column)
+        - [type](#type)
+        - [length](#length)
+        - [is_not_null](#is_not_null)
+        - [primary_key](#primary_key)
+        - [auto_increment](#auto_increment)
+        - [comment](#comment)
+        - [unique](#unique)
+    - [build](#build)
+
+---
+
+## 简介
+
+* 基于各数据库连接包的二次开发SQL数据池连接工具
+* 包含7种数据库连接的再开发，7种数据库是：
+    * mariaDB
+    * MySQL
+    * Oracle
+    * Postgresql
+    * sqLite
+    * SQLServer
+    * Sparrow
+* 直接从主入口导入
+
+```python
+from sparrowSql import MariaDB
+from sparrowSql import MySQL
+from sparrowSql import Oracle
+from sparrowSql import Postgresql
+from sparrowSql import SqLite
+from sparrowSql import SqlServer
+from sparrowSql import Sparrow
+```
+
+---
+
+## 安装
+
+```
+pip install sparrowSql
+```
+
+---
+
+## 数据库连接类
+
+### MariaDB
+
+* 连接MariaDB的类
+* MariaDB初始化包含六个参数
+    * host: 数据库地址
+    * port: 数据库端口
+    * user: 操作用户
+    * passwd: 用户密码
+    * db: 数据库名称（可选）
+    * max_connections: 最大连接数，默认50
+
+```python
+from sparrowSql import MariaDB
+
+m = MariaDB(
+    "127.0.0.1",
+    3306,
+    "user",
+    "password"
+)
+```
+
+---
+
+### MySQL
+
+* 连接MySQL的类
+* MySQL初始化包含六个参数
+    * host: 数据库地址
+    * port: 数据库端口
+    * user: 操作用户
+    * passwd: 用户密码
+    * db: 数据库名称（可选）
+    * max_connections: 最大连接数，默认50
+
+```python
+from sparrowSql import MySQL
+
+m = MySQL(
+    "127.0.0.1",
+    3306,
+    "user",
+    "password"
+)
+```
+
+---
+
+### Oracle
+
+* 连接Oracle的类
+* Oracle初始化包含六个参数
+    * host: 数据库地址
+    * port: 数据库端口
+    * user: 操作用户
+    * passwd: 用户密码
+    * db: 数据库名称（可选）
+    * max_connections: 最大连接数，默认50
+
+```python
+from sparrowSql import Oracle
+
+o = Oracle(
+    "127.0.0.1",
+    3306,
+    "user",
+    "password"
+)
+```
+
+---
+
+### Postgresql
+
+* 连接Postgresql的类
+* Postgresql初始化包含六个参数
+    * host: 数据库地址
+    * port: 数据库端口
+    * user: 操作用户
+    * passwd: 用户密码
+    * db: 数据库名称（可选）
+    * max_connections: 最大连接数，默认50
+
+```python
+from sparrowSql import Postgresql
+
+p = Postgresql(
+    "127.0.0.1",
+    3306,
+    "user",
+    "password"
+)
+```
+
+---
+
+### Sparrow
+
+* 连接Sparrow的类
+* Sparrow初始化包含四个参数
+    * host: 数据库地址
+    * port: 数据库端口
+    * user: 操作用户
+    * passwd: 用户密码
+
+```python
+from sparrowSql import Sparrow
+
+s = Sparrow(
+    "127.0.0.1",
+    3306,
+    "user",
+    "password"
+)
+```
+
+---
+
+### SqLite
+
+* 连接SqLite的类
+* SqLite初始化包含一个参数
+    * db_file: sqLite文件路径
+
+```python
+from sparrowSql import SqLite
+
+p = SqLite(
+    "db.db"
+)
+```
+
+---
+
+### SqlServer
+
+* 连接SqlServer的类
+* SqlServer初始化包含六个参数
+    * host: 数据库地址
+    * port: 数据库端口
+    * user: 操作用户
+    * passwd: 用户密码
+    * db: 数据库名称（可选）
+    * max_connections: 最大连接数，默认50
+
+```python
+from sparrowSql import SqlServer
+
+ss = SqlServer(
+    "127.0.0.1",
+    3306,
+    "user",
+    "password"
+)
+```
+
+---
+
+## 方法适用列表
+
+| 操作/数据库                      | MySQL | MariaDB | Oracle | Postgresql | SqLite | SqlServer | Sparrow |
+|-----------------------------|-------|---------|--------|------------|--------|-----------|---------|
+| connect_information         | √     | √       | √      | √          | ×      | √         | ×       |
+| user_defined_sql            | √     | √       | √      | √          | √      | √         | ×       |
+| insert                      | √     | √       | √      | √          | √      | √         | ×       |
+| update                      | √     | √       | √      | √          | √      | √         | ×       |
+| delete                      | √     | √       | √      | √          | √      | √         | ×       |
+| select                      | √     | √       | √      | √          | √      | √         | ×       |
+| create_table                | √     | √       | √      | √          | √      | ×         | ×       |
+| create_database             | √     | √       | √      | √          | ×      | ×         | ×       |
+| drop_table                  | √     | √       | √      | √          | √      | ×         | ×       |
+| show_table                  | √     | √       | √      | √          | √      | √         | ×       |
+| show_table_by_database_name | √     | √       | √      | √          | ×      | √         | ×       |
+| show_database               | √     | √       | √      | √          | ×      | √         | ×       |
+| drop_database               | √     | √       | √      | √          | ×      | ×         | ×       |
+| alter_table_name            | √     | √       | √      | √          | √      | ×         | ×       |
+| drop_column                 | √     | √       | √      | √          | √      | ×         | ×       |
+| alter_column_type           | √     | √       | √      | √          | √      | ×         | ×       |
+| alter_column_name           | √     | √       | √      | √          | √      | ×         | ×       |
+| add_column                  | √     | √       | √      | √          | √      | ×         | ×       |
+| create_index                | √     | √       | √      | √          | √      | ×         | ×       |
+| create_unique_index         | √     | √       | √      | √          | √      | ×         | ×       |
+| drop_index                  | √     | √       | √      | √          | √      | ×         | ×       |
+| get_cursor                  | √     | √       | √      | ×          | ×      | ×         | ×       |
+| get_connection              | √     | √       | √      | ×          | ×      | ×         | ×       |
+| show_columns                | √     | √       | √      | √          | ×      | √         | ×       |
+| show_model                  | ×     | ×       | ×      | √          | ×      | ×         | ×       |
+| close                       | ×     | ×       | ×      | ×          | √      | ×         | ×       |
+| commit                      | ×     | ×       | ×      | ×          | √      | ×         | ×       |
+| commit_close                | ×     | ×       | ×      | ×          | √      | ×         | ×       |
+| start_transaction           | ×     | ×       | ×      | ×          | √      | ×         | ×       |
+| rollback_transaction        | ×     | ×       | ×      | ×          | √      | ×         | ×       |
+| commit_transaction          | ×     | ×       | ×      | ×          | √      | ×         | ×       |
+| get_key                     | ×     | ×       | ×      | ×          | ×      | ×         | √       |
+| set_key                     | ×     | ×       | ×      | ×          | ×      | ×         | √       |
+| reset_key                   | ×     | ×       | ×      | ×          | ×      | ×         | √       |
+| delete_key                  | ×     | ×       | ×      | ×          | ×      | ×         | √       |
+| set_body                    | ×     | ×       | ×      | ×          | ×      | ×         | √       |
+| get_body                    | ×     | ×       | ×      | ×          | ×      | ×         | √       |
+| reset_body                  | ×     | ×       | ×      | ×          | ×      | ×         | √       |
+| reset_body_all              | ×     | ×       | ×      | ×          | ×      | ×         | √       |
+| delete_body                 | ×     | ×       | ×      | ×          | ×      | ×         | √       |
+| set_time                    | ×     | ×       | ×      | ×          | ×      | ×         | √       |
+| set_body_time               | ×     | ×       | ×      | ×          | ×      | ×         | √       |
+| get_all                     | ×     | ×       | ×      | ×          | ×      | ×         | √       |
+| get_all_body                | ×     | ×       | ×      | ×          | ×      | ×         | √       |
+
+---
+
+# SQL条件构建器功能介绍
+
+* 以下方法适用于MySQL，MariaDB，Oracle，SqLite，SQLServer，Postgresql带条件的构造器使用
+* 例如：
+    * select方法
+    * delete方法
+    * update方法
+
+---
+
+## 单表查询条件
+
+### and_between
+
+* **功能**：构建介于两者之间的单表并列查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `start`: 开始位置。
+    * `end`: 结束位置。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `AND column BETWEEN start AND end` 的条件。
+
+---
+
+### or_between
+
+* **功能**：构建介于两者之间的单表或查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `start`: 开始位置。
+    * `end`: 结束位置。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `OR column BETWEEN start AND end` 的条件。
+
+---
+
+### and_equal
+
+* **功能**：构建等于的单表并列查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 比较值。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `AND column = value` 的条件。
+
+---
+
+### or_equal
+
+* **功能**：构建等于的单表或查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 比较值。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `OR column = value` 的条件。
+
+---
+
+### and_unequal
+
+* **功能**：构建不等于的单表并列查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 比较值。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `AND column != value` 的条件。
+
+---
+
+### or_unequal
+
+* **功能**：构建不等于的单表或查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 比较值。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `OR column != value` 的条件。
+
+---
+
+### and_equal_greater
+
+* **功能**：构建大于等于的单表并列查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 比较值。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `AND column >= value` 的条件。
+
+---
+
+### or_equal_greater
+
+* **功能**：构建大于等于的单表或查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 比较值。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `OR column >= value` 的条件。
+
+---
+
+### and_equal_less
+
+* **功能**：构建小于等于的单表并列查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 比较值。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `AND column <= value` 的条件。
+
+---
+
+### or_unequal_less
+
+* **功能**：构建小于且不等于的单表或查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 比较值。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `OR column < value AND column != value` 的条件。
+
+---
+
+### and_greater
+
+* **功能**：构建大于的单表并列查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 比较值。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `AND column > value` 的条件。
+
+---
+
+### or_greater
+
+* **功能**：构建大于的单表或查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 比较值。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `OR column > value` 的条件。
+
+---
+
+### and_less
+
+* **功能**：构建小于的单表并列查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 比较值。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `AND column < value` 的条件。
+
+---
+
+### or_less
+
+* **功能**：构建小于的单表或查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 比较值。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `OR column < value` 的条件。
+
+---
+
+### and_like_start
+
+* **功能**：构建以特定字符串开头的模式匹配单表并列查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 匹配模式（例如 `abc%`）。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `AND column LIKE 'value%'` 的条件，适用于字符串搜索。
+
+---
+
+### or_like_start
+
+* **功能**：构建以特定字符串开头的模式匹配单表或查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 匹配模式（例如 `abc%`）。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `OR column LIKE 'value%'` 的条件，适用于字符串搜索。
+
+---
+
+### and_like_end
+
+* **功能**：构建以特定字符串结尾的模式匹配单表并列查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 匹配模式（例如 `%abc`）。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `AND column LIKE '%value'` 的条件，适用于字符串搜索。
+
+---
+
+### or_like_end
+
+* **功能**：构建以特定字符串结尾的模式匹配单表或查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 匹配模式（例如 `%abc`）。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `OR column LIKE '%value'` 的条件，适用于字符串搜索。
+
+---
+
+### and_like
+
+* **功能**：构建包含模式匹配的单表并列查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 匹配模式（例如 `%abc%`）。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `AND column LIKE '%value%'` 的条件，适用于字符串搜索。
+
+---
+
+### or_like
+
+* **功能**：构建包含模式匹配的单表或查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 匹配模式（例如 `%abc%`）。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `OR column LIKE '%value%'` 的条件，适用于字符串搜索。
+
+---
+
+### and_in
+
+* **功能**：构建属于一组值的单表并列查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 值列表。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `AND column IN (value1, value2, ...)` 的条件。
+
+---
+
+### or_in
+
+* **功能**：构建属于一组值的单表或查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 值列表。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `OR column IN (value1, value2, ...)` 的条件。
+
+---
+
+### and_not_in
+
+* **功能**：构建不属于一组值的单表并列查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 值列表。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `AND column NOT IN (value1, value2, ...)` 的条件。
+
+---
+
+### or_not_in
+
+* **功能**：构建不属于一组值的单表或查询条件。
+* **参数**：
+    * `column`: 字段名。
+    * `value`: 值列表。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `OR column NOT IN (value1, value2, ...)` 的条件。
+
+---
+
+### and_is_null
+
+* **功能**：构建字段为 NULL 的单表并列查询条件。
+* **参数**：
+    * `column`: 字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `AND column IS NULL` 的条件。
+
+---
+
+### or_is_null
+
+* **功能**：构建字段为 NULL 的单表或查询条件。
+* **参数**：
+    * `column`: 字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `OR column IS NULL` 的条件。
+
+---
+
+### and_is_not_null
+
+* **功能**：构建字段不为 NULL 的单表并列查询条件。
+* **参数**：
+    * `column`: 字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `AND column IS NOT NULL` 的条件。
+
+---
+
+### or_is_not_null
+
+* **功能**：构建字段不为 NULL 的单表或查询条件。
+* **参数**：
+    * `column`: 字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在查询中添加 `OR column IS NOT NULL` 的条件。
+
+---
+
+## 跨表查询条件
+
+### and_between_cross_table
+
+* **功能**：构建介于两者之间的跨表并列查询条件。
+* **参数**：
+    * `table_column`: 表和字段名（如 `table.column`）。
+    * `start`: 开始位置。
+    * `end`: 结束位置。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在跨表查询中添加 `AND table.column BETWEEN start AND end` 的条件。
+
+---
+
+### or_between_cross_table
+
+* **功能**：构建介于两者之间的跨表或查询条件。
+* **参数**：
+    * `table_column`: 表和字段名（如 `table.column`）。
+    * `start`: 开始位置。
+    * `end`: 结束位置。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在跨表查询中添加 `OR table.column BETWEEN start AND end` 的条件。
+
+---
+
+### and_equal_cross_table
+
+* **功能**：构建等于的跨表并列查询条件。
+* **参数**：
+    * `table_column`: 表和字段名（如 `table.column`）。
+    * `value`: 比较值。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在跨表查询中添加 `AND table.column = value` 的条件。
+
+---
+
+### or_equal_cross_table
+
+* **功能**：构建等于的跨表或查询条件。
+* **参数**：
+    * `table_column`: 表和字段名（如 `table.column`）。
+    * `value`: 比较值。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在跨表查询中添加 `OR table.column = value` 的条件。
+
+---
+
+### and_unequal_cross_table
+
+* **功能**：构建跨表不等于的查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+    * `table2_column`: 第二个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `AND table1.column != table2.column` 的条件。
+
+---
+
+### or_unequal_cross_table
+
+* **功能**：构建跨表不等于的或查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+    * `table2_column`: 第二个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `OR table1.column != table2.column` 的条件。
+
+---
+
+### and_equal_greater_cross_table
+
+* **功能**：构建跨表等于或大于的查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+    * `table2_column`: 第二个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `AND table1.column >= table2.column` 的条件。
+
+---
+
+### or_equal_greater_cross_table
+
+* **功能**：构建跨表等于或大于的或查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+    * `table2_column`: 第二个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `OR table1.column >= table2.column` 的条件。
+
+---
+
+### and_equal_less_cross_table
+
+* **功能**：构建跨表等于或小于的查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+    * `table2_column`: 第二个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `AND table1.column <= table2.column` 的条件。
+
+---
+
+### or_unequal_less_cross_table
+
+* **功能**：构建跨表不等于且小于的或查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+    * `table2_column`: 第二个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `OR table1.column != table2.column AND table1.column < table2.column` 的条件。
+
+---
+
+### and_greater_cross_table
+
+* **功能**：构建跨表大于的查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+    * `table2_column`: 第二个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `AND table1.column > table2.column` 的条件。
+
+---
+
+### or_greater_cross_table
+
+* **功能**：构建跨表大于的或查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+    * `table2_column`: 第二个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `OR table1.column > table2.column` 的条件。
+
+---
+
+### and_less_cross_table
+
+* **功能**：构建跨表小于的查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+    * `table2_column`: 第二个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `AND table1.column < table2.column` 的条件。
+
+---
+
+### or_less_cross_table
+
+* **功能**：构建跨表小于的或查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+    * `table2_column`: 第二个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `OR table1.column < table2.column` 的条件。
+
+---
+
+### or_like_cross_table
+
+* **功能**：构建跨表包含模式匹配的或查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+    * `table2_column`: 第二个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `OR table1.column LIKE table2.column` 的条件，适用于字符串搜索。
+
+---
+
+### and_in_cross_table
+
+* **功能**：构建跨表属于一组值的查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+    * `table2_column`: 第二个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `AND table1.column IN (SELECT table2.column FROM table2)` 的条件。
+
+---
+
+### or_in_cross_table
+
+* **功能**：构建跨表属于一组值的或查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+    * `table2_column`: 第二个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `OR table1.column IN (SELECT table2.column FROM table2)` 的条件。
+
+---
+
+### and_not_in_cross_table
+
+* **功能**：构建跨表不属于一组值的查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+    * `table2_column`: 第二个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `AND table1.column NOT IN (SELECT table2.column FROM table2)` 的条件。
+
+---
+
+### or_not_in_cross_table
+
+* **功能**：构建跨表不属于一组值的或查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+    * `table2_column`: 第二个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `OR table1.column NOT IN (SELECT table2.column FROM table2)` 的条件。
+
+---
+
+### and_is_null_cross_table
+
+* **功能**：构建跨表字段为 NULL 的查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `AND table1.column IS NULL` 的条件。
+
+---
+
+### or_is_null_cross_table
+
+* **功能**：构建跨表字段为 NULL 的或查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `OR table1.column IS NULL` 的条件。
+
+---
+
+### and_is_not_null_cross_table
+
+* **功能**：构建跨表字段不为 NULL 的查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `AND table1.column IS NOT NULL` 的条件。
+
+---
+
+### or_is_not_null_cross_table
+
+* **功能**：构建跨表字段不为 NULL 的或查询条件。
+* **参数**：
+    * `table1_column`: 第一个表的字段名。
+* **输出**：无直接输出；将条件添加到查询构建器中。
+* **用途**：用于在多表查询中添加 `OR table1.column IS NOT NULL` 的条件。
+
+---
+
+## 其他
+
+### multi_condition_query
+
+* **功能**：支持多条件组合查询。
+* **参数**：
+    * `conditions`: 多条件参数 [{"name": ""(str), "value": ""(str,list),
+      "logical_condition": ""(str), "judgement_condition": ""(str)}]
+      其中，name是字段名，value字段值，logical_condition是条件间逻辑包含（and, or），
+      judgement_condition是判断模式包含（>,<,=,>=,<=,in,not in等）。
+* **输出**：无直接输出；根据提供的条件构建复杂的查询语句。
+* **用途**：允许用户通过一个列表定义多个查询条件，灵活地构造复杂查询。该方法特别适用于需要结合多种条件进行筛选的情况，例如在报表生成或数据检索中使用。
+
+---
+
+### sort
+
+* **功能**：为查询结果添加排序条件。
+* **参数**：
+    * `column`: 要排序的字段名。
+    * `direction`: 排序方向，可选值为 `"ASC"` 或 `"DESC"`（不区分大小写）。
+* **输出**：无直接输出；返回当前实例以支持链式调用。
+* **用途**：用于在查询中指定结果集的排序方式，确保数据按特定顺序返回。
+* **注意事项**：如果提供的排序方向不是 `"ASC"` 或 `"DESC"`，则会抛出 `ValueError`。
+
+---
+
+### group_by
+
+* **功能**：为查询结果添加分组条件。
+* **参数**：
+    * `column`: 包含要分组字段的列表。
+* **输出**：无直接输出；返回当前实例以支持链式调用。
+* **用途**：用于对查询结果进行分组，通常与聚合函数一起使用，以便汇总或统计信息。
+
+---
+
+### limit
+
+* **功能**：限制查询结果的数量，并支持分页。
+* **参数**：
+    * `index`: 分页索引，表示从哪一页开始获取数据。
+    * `size`: 每页的数据量。
+* **输出**：无直接输出；返回当前实例以支持链式调用。
+* **用途**：用于控制返回的数据量，适用于分页显示结果集。
+* **注意事项**：如果提供的 `index` 或 `size` 不是整数，则会抛出 `TypeError`。
+
+---
+
+### run
+
+* **功能**：执行构造好的 SQL 查询。
+* **参数**：无。
+* **输出**：返回查询结果集。
+* **用途**：最终执行由其他方法构建的 SQL 查询语句，并返回查询结果。
+* **实现细节**：
+    - 构建完整的 SQL 语句，包括选择语句头 (`_head_sql`)、WHERE 子句 (`_build_where_clause`)、ORDER BY 子句 (`_sort_sql`)
+      、GROUP BY 子句 (`_group_by_sql`) 和 LIMIT 子句 (`_limit_sql`)。
+    - 执行构建好的 SQL 语句，并获取所有匹配的行。
+    - 提交事务，关闭游标和数据库连接。
+* **注意事项**：此方法负责清理资源（如关闭游标和连接），因此应在完成查询后调用。
+
+---
+
+# 表创建
+
+* 以下方法适用于MySQL，MariaDB，Oracle，SqLite，SQLServer，Postgresql的create_tabel方法使用
+
+## 字段设置
+
+### column
+
+* **功能**：初始化字段。
+* **参数**：
+    * `column_name`: 字段名。
+* **输出**：返回 `_ColumnBuilder` 实例以支持链式调用。
+* **用途**：为新表添加一个字段，并进入字段配置模式。
+* **注意事项**：如果字段已存在，则会抛出异常。
+
+---
+
+### type
+
+* **功能**：设置字段的数据类型。
+* **参数**：
+    * `column_type`: 数据库支持的字段类型。
+* **输出**：返回当前实例以支持链式调用。
+* **用途**：指定字段的数据类型，例如 `INT`, `VARCHAR` 等。
+
+---
+
+### length
+
+* **功能**：设置字段的最大长度。
+* **参数**：
+    * `length`: 字段长度。
+* **输出**：返回当前实例以支持链式调用。
+* **用途**：为字符或二进制数据类型的字段指定最大长度。
+
+---
+
+### is_not_null
+
+* **功能**：设置字段是否允许为空。
+* **参数**：
+    * `is_nullable`: 是否允许为空，默认为 `True`。
+* **输出**：返回当前实例以支持链式调用。
+* **用途**：指定字段是否可以包含 `NULL` 值。
+* **注意事项**：默认情况下，字段是不允许为空的（即 `NOT NULL`）。
+
+---
+
+### primary_key
+
+* **功能**：设置字段为主键。
+* **参数**：无。
+* **输出**：返回当前实例以支持链式调用。
+* **用途**：将字段定义为表的主键。
+* **注意事项**：每个表只能有一个主键字段。
+
+---
+
+### auto_increment
+
+* **功能**：设置字段为自增字段。
+* **参数**：无。
+* **输出**：返回当前实例以支持链式调用。
+* **用途**：使整数类型的字段值自动递增。
+* **注意事项**：仅适用于整数类型的字段。
+
+---
+
+### comment
+
+* **功能**：为字段添加注释。
+* **参数**：
+    * `column_comment`: 字段注释内容。
+* **输出**：返回当前实例以支持链式调用。
+* **用途**：为字段提供描述性注释，帮助理解字段用途。在SQLServer中不适用
+
+---
+
+### unique
+
+* **功能**：添加字段的唯一值约束。
+* **参数**：
+    * `column_unique`: 是否为唯一值，默认为 `False`。
+* **输出**：返回当前实例以支持链式调用。
+* **用途**：为字段提供唯一值约束。仅在SQLServer中适用
+
+---
+
+## build
+
+* **功能**：构建 SQL 并执行。
+* **参数**：无。
+* **输出**：无直接输出；执行创建表的 SQL 语句。
+* **用途**：最终生成并执行创建表的 SQL 语句。
+* **实现细节**：
+    - 构建完整的 SQL 创建表语句，包括字段定义、主键、自增属性、字段注释等。
+    - 如果指定了表注释，则将其添加到 SQL 语句中。
+    - 执行构建好的 SQL 语句，并提交事务。
+    - 关闭游标和数据库连接。
+* **注意事项**：此方法负责清理资源（如关闭游标和连接），因此应在完成表创建后调用。

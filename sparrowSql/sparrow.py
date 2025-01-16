@@ -13,7 +13,7 @@ class Sparrow(object):
         self.headers = {"SparrowApi": "SparrowApi", "Password": password, "Username": username}
         self._url_ = f"http://{host}:{port}"
 
-    def get(self, key: str):
+    def get_key(self, key: str):
         """
         获取普通键值
         :param key: 键名
@@ -24,7 +24,7 @@ class Sparrow(object):
         r.close()
         return r.json()
 
-    def set(self, key: str, value: str, valid_time: float = None):
+    def set_key(self, key: str, value: str, valid_time: float = None):
         """
         插入普通键值
         :param valid_time: 过期时间，不输入则不过期
@@ -40,7 +40,7 @@ class Sparrow(object):
         r.close()
         return r.json()
 
-    def reset(self, key: str, value: str, valid_time: float = None):
+    def reset_key(self, key: str, value: str, valid_time: float = None):
         """
         修改普通键值
         :param valid_time: 过期时间，不输入则不过期
@@ -56,7 +56,7 @@ class Sparrow(object):
         r.close()
         return r.json()
 
-    def delete(self, key: str):
+    def delete_key(self, key: str):
         """
         删除普通键值
         :param key: 键名
