@@ -543,7 +543,10 @@ class MySQLCreateTable:
         """
         column_definitions = []
         for column in self._columns_:
-            definition = f"`{column['name']}` {column['type']}({column['length']})"
+            if "text" in column['type']:
+                definition = f"`{column['name']}` {column['type']}"
+            else:
+                definition = f"`{column['name']}` {column['type']}({column['length']})"
             if column['null']:
                 definition += " NOT NULL"
             if column['primary_key']:
