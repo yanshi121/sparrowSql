@@ -1,3 +1,4 @@
+LICENSE.txt
 setup.py
 sparrowSql/__init__.py
 sparrowSql/mariaDB.py

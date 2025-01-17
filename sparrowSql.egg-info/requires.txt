@@ -3,5 +3,4 @@ dbutils
 oracledb
 psycopg2
 requests
-sqlite3
 pyodbc
