@@ -1,6 +1,0 @@
-pymysql
-dbutils
-oracledb
-psycopg2
-requests
-pyodbc
