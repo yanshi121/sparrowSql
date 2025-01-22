@@ -14,7 +14,7 @@ class SQLConditionsBuilderBass:
         :param end: 结束位置
         :return:
         """
-        self._and_where_clauses.append(f"{column} BETWEEN '{start}' AND '{end}'")
+        self._and_where_clauses.append(f"`{column}` BETWEEN '{start}' AND '{end}'")
         return self
 
     def or_between(self, column: str, start: str, end: str):
@@ -25,7 +25,7 @@ class SQLConditionsBuilderBass:
         :param end: 结束位置
         :return:
         """
-        self._or_where_clauses.append(f"{column} BETWEEN '{start}' AND '{end}'")
+        self._or_where_clauses.append(f"`{column}` BETWEEN '{start}' AND '{end}'")
         return self
 
     def and_equal(self, column: str, value: str):
@@ -35,7 +35,7 @@ class SQLConditionsBuilderBass:
         :param value: 开始位置
         :return:
         """
-        self._and_where_clauses.append(f"{column} = '{value}'")
+        self._and_where_clauses.append(f"`{column}` = '{value}'")
         return self
 
     def or_equal(self, column: str, value: str):
@@ -45,7 +45,7 @@ class SQLConditionsBuilderBass:
         :param value: 开始位置
         :return:
         """
-        self._or_where_clauses.append(f"{column} = '{value}'")
+        self._or_where_clauses.append(f"`{column}` = '{value}'")
         return self
 
     def and_unequal(self, column: str, value: str):
@@ -55,7 +55,7 @@ class SQLConditionsBuilderBass:
         :param value: 开始位置
         :return:
         """
-        self._and_where_clauses.append(f"{column} != '{value}'")
+        self._and_where_clauses.append(f"`{column}` != '{value}'")
         return self
 
     def or_unequal(self, column: str, value: str):
@@ -65,62 +65,62 @@ class SQLConditionsBuilderBass:
         :param value: 开始位置
         :return:
         """
-        self._or_where_clauses.append(f"{column} != '{value}'")
+        self._or_where_clauses.append(f"`{column}` != '{value}'")
         return self
 
     def and_equal_greater(self, column: str, value: str):
-        self._and_where_clauses.append(f"{column} >= '{value}'")
+        self._and_where_clauses.append(f"`{column}` >= '{value}'")
         return self
 
     def or_equal_greater(self, column: str, value: str):
-        self._or_where_clauses.append(f"{column} >= '{value}'")
+        self._or_where_clauses.append(f"`{column}` >= '{value}'")
 
     def and_equal_less(self, column: str, value: str):
-        self._and_where_clauses.append(f"{column} <= '{value}'")
+        self._and_where_clauses.append(f"`{column}` <= '{value}'")
         return self
 
     def or_unequal_less(self, column: str, value: str):
-        self._or_where_clauses.append(f"{column} <= '{value}'")
+        self._or_where_clauses.append(f"`{column}` <= '{value}'")
         return self
 
     def and_greater(self, column: str, value: str):
-        self._and_where_clauses.append(f"{column} > '{value}'")
+        self._and_where_clauses.append(f"`{column}` > '{value}'")
         return self
 
     def or_greater(self, column: str, value: str):
-        self._or_where_clauses.append(f"{column} > '{value}'")
+        self._or_where_clauses.append(f"`{column}` > '{value}'")
         return self
 
     def and_less(self, column: str, value: str):
-        self._and_where_clauses.append(f"{column} < '{value}'")
+        self._and_where_clauses.append(f"`{column}` < '{value}'")
         return self
 
     def or_less(self, column: str, value: str):
-        self._or_where_clauses.append(f"{column} < '{value}'")
+        self._or_where_clauses.append(f"`{column}` < '{value}'")
         return self
 
     def and_like_start(self, column: str, value: str):
-        self._and_where_clauses.append(f"{column} like '%{value}'")
+        self._and_where_clauses.append(f"`{column}` like '%{value}'")
         return self
 
     def or_like_start(self, column: str, value: str):
-        self._or_where_clauses.append(f"{column} like '%{value}'")
+        self._or_where_clauses.append(f"`{column}` like '%{value}'")
         return self
 
     def and_like_end(self, column: str, value: str):
-        self._and_where_clauses.append(f"{column} like '{value}%'")
+        self._and_where_clauses.append(f"`{column}` like '{value}%'")
         return self
 
     def or_like_end(self, column: str, value: str):
-        self._or_where_clauses.append(f"{column} like '{value}%'")
+        self._or_where_clauses.append(f"`{column}` like '{value}%'")
         return self
 
     def and_like(self, column: str, value: str):
-        self._and_where_clauses.append(f"{column} like '%{value}%'")
+        self._and_where_clauses.append(f"`{column}` like '%{value}%'")
         return self
 
     def or_like(self, column: str, value: str):
-        self._or_where_clauses.append(f"{column} like '%{value}%'")
+        self._or_where_clauses.append(f"`{column}` like '%{value}%'")
         return self
 
     def and_in(self, column: str, value: list):
@@ -128,7 +128,7 @@ class SQLConditionsBuilderBass:
             raise TypeError("value must be list")
         dt = "', '".join(value)
         sql = "('" + f"{dt}" + "')"
-        self._and_where_clauses.append(f"{column} IN {sql}")
+        self._and_where_clauses.append(f"`{column}` IN {sql}")
         return self
 
     def or_in(self, column: str, value: list):
@@ -136,7 +136,7 @@ class SQLConditionsBuilderBass:
             raise TypeError("value must be list")
         dt = "', '".join(value)
         sql = "('" + f"{dt}" + "')"
-        self._or_where_clauses.append(f"{column} IN {sql}")
+        self._or_where_clauses.append(f"`{column}` IN {sql}")
         return self
 
     def and_not_in(self, column: str, value: list):
@@ -144,7 +144,7 @@ class SQLConditionsBuilderBass:
             raise TypeError("value must be list")
         dt = "', '".join(value)
         sql = "('" + f"{dt}" + "')"
-        self._and_where_clauses.append(f"{column} NOT IN {sql}")
+        self._and_where_clauses.append(f"`{column}` NOT IN {sql}")
         return self
 
     def or_not_in(self, column: str, value: list):
@@ -152,101 +152,101 @@ class SQLConditionsBuilderBass:
             raise TypeError("value must be list")
         dt = "', '".join(value)
         sql = "('" + f"{dt}" + "')"
-        self._or_where_clauses.append(f"{column} NOT IN {sql}")
+        self._or_where_clauses.append(f"`{column}` NOT IN {sql}")
         return self
 
     def and_between_cross_table(self, column: str, start: str, end: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         self._and_where_clauses.append(f"{column} BETWEEN {start} AND {end}")
         return self
 
     def or_between_cross_table(self, column: str, start: str, end: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         self._or_where_clauses.append(f"{column} BETWEEN {start} AND {end}")
         return self
 
     def and_equal_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         self._and_where_clauses.append(f"{column} = {value}")
         return self
 
     def or_equal_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         self._or_where_clauses.append(f"{column} = {value}")
         return self
 
     def and_unequal_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         self._and_where_clauses.append(f"{column} != {value}")
         return self
 
     def or_unequal_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         self._or_where_clauses.append(f"{column} != {value}")
         return self
 
     def and_equal_greater_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         self._and_where_clauses.append(f"{column} >= {value}")
         return self
 
     def or_equal_greater_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         self._or_where_clauses.append(f"{column} >= {value}")
 
     def and_equal_less_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         self._and_where_clauses.append(f"{column} <= {value}")
         return self
 
     def or_unequal_less_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         self._or_where_clauses.append(f"{column} <= {value}")
         return self
 
     def and_greater_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         self._and_where_clauses.append(f"{column} > {value}")
         return self
 
     def or_greater_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         self._or_where_clauses.append(f"{column} > {value}")
         return self
 
     def and_less_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         self._and_where_clauses.append(f"{column} < {value}")
         return self
 
     def or_less_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         self._or_where_clauses.append(f"{column} < {value}")
         return self
 
     def and_in_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         if type(value) is not str:
             raise TypeError("value must be str")
         self._and_where_clauses.append(f"{column} IN {value}")
         return self
 
     def or_in_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         if type(value) is not str:
             raise TypeError("value must be str")
         self._or_where_clauses.append(f"{column} IN {value}")
         return self
 
     def and_not_in_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         if type(value) is not str:
             raise TypeError("value must be str")
         self._and_where_clauses.append(f"{column} NOT IN {value}")
         return self
 
     def or_not_in_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"'{column}'", column)
+        self._head_sql.replace(f"`{column}`", column)
         if type(value) is not str:
             raise TypeError("value must be str")
         self._or_where_clauses.append(f"{column} NOT IN {value}")

@@ -166,7 +166,7 @@ class Oracle:
         if columns is None:
             columns_str = "*"
         else:
-            columns_str = "'" + "', '".join(columns) + "'"
+            columns_str = "`" + "`, `".join(columns) + "`"
         head_sql = f"SELECT {columns_str} FROM {table}"
         connect = self.get_connection()
         cursor = connect.cursor()
