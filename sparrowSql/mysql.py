@@ -155,7 +155,14 @@ class MySQL:
         if columns is None:
             columns_str = "*"
         else:
-            columns_str = "`" + "`, `".join(columns) + "`"
+            keywords = [i[0] for i in self.user_defined_sql("SELECT `name` from mysql.help_keyword")]
+            add_columns = []
+            for i in columns:
+                if i.upper() in keywords:
+                    add_columns.append(f"`{i}`")
+                else:
+                    add_columns.append(f"{i}")
+            columns_str = ", ".join(add_columns)
         head_sql = f"SELECT {columns_str} FROM {table}"
         connect = self._pool_.connection()
         cursor = connect.cursor()

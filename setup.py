@@ -4,7 +4,7 @@ with open("sparrowSql.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 setuptools.setup(
     name="sparrowSql",  # 包名
-    version="0.1.8.3",  # 包版本号
+    version="0.1.8.4",  # 包版本号
     author="39",  # 作者名
     author_email="DY39project@outlook.com",  # 联系方式
     description="基于各数据库连接包的二次开发SQL连接工具",  # 包的简述

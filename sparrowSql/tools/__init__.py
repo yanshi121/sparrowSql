@@ -156,97 +156,79 @@ class SQLConditionsBuilderBass:
         return self
 
     def and_between_cross_table(self, column: str, start: str, end: str):
-        self._head_sql.replace(f"`{column}`", column)
         self._and_where_clauses.append(f"{column} BETWEEN {start} AND {end}")
         return self
 
     def or_between_cross_table(self, column: str, start: str, end: str):
-        self._head_sql.replace(f"`{column}`", column)
         self._or_where_clauses.append(f"{column} BETWEEN {start} AND {end}")
         return self
 
     def and_equal_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         self._and_where_clauses.append(f"{column} = {value}")
         return self
 
     def or_equal_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         self._or_where_clauses.append(f"{column} = {value}")
         return self
 
     def and_unequal_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         self._and_where_clauses.append(f"{column} != {value}")
         return self
 
     def or_unequal_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         self._or_where_clauses.append(f"{column} != {value}")
         return self
 
     def and_equal_greater_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         self._and_where_clauses.append(f"{column} >= {value}")
         return self
 
     def or_equal_greater_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         self._or_where_clauses.append(f"{column} >= {value}")
 
     def and_equal_less_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         self._and_where_clauses.append(f"{column} <= {value}")
         return self
 
     def or_unequal_less_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         self._or_where_clauses.append(f"{column} <= {value}")
         return self
 
     def and_greater_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         self._and_where_clauses.append(f"{column} > {value}")
         return self
 
     def or_greater_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         self._or_where_clauses.append(f"{column} > {value}")
         return self
 
     def and_less_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         self._and_where_clauses.append(f"{column} < {value}")
         return self
 
     def or_less_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         self._or_where_clauses.append(f"{column} < {value}")
         return self
 
     def and_in_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         if type(value) is not str:
             raise TypeError("value must be str")
         self._and_where_clauses.append(f"{column} IN {value}")
         return self
 
     def or_in_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         if type(value) is not str:
             raise TypeError("value must be str")
         self._or_where_clauses.append(f"{column} IN {value}")
         return self
 
     def and_not_in_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         if type(value) is not str:
             raise TypeError("value must be str")
         self._and_where_clauses.append(f"{column} NOT IN {value}")
         return self
 
     def or_not_in_cross_table(self, column: str, value: str):
-        self._head_sql.replace(f"`{column}`", column)
         if type(value) is not str:
             raise TypeError("value must be str")
         self._or_where_clauses.append(f"{column} NOT IN {value}")
