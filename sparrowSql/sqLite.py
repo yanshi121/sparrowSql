@@ -111,7 +111,7 @@ class SqLite:
         if columns is None:
             columns_str = "*"
         else:
-            columns_str = ", ".join(columns)
+            columns_str = "'" + "', '".join(columns) + "'"
         head_sql = f"SELECT {columns_str} FROM {table}"
         return SelectConditionsBuilder(head_sql, self._cursor_)
 

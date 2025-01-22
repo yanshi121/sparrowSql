@@ -154,7 +154,7 @@ class Postgresql:
         if columns is None:
             columns_str = "*"
         else:
-            columns_str = ", ".join(columns)
+            columns_str = "'" + "', '".join(columns) + "'"
         head_sql = f"SELECT {columns_str} FROM {table}"
         connect = self._pool_.connection()
         cursor = connect.cursor()
