@@ -461,3 +461,5 @@ class MariaDB:
         """
         connect = self._pool_.connection()
         return connect
+    def close(self):
+        self._pool_.close()

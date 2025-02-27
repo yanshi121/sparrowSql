@@ -459,3 +459,6 @@ class Postgresql:
               }
              ]).run()
         return dt
+
+    def close(self):
+        self._pool_.close()

@@ -453,3 +453,6 @@ class Oracle:
         cursor.close()
         connect.close()
         return row
+
+    def close(self):
+        self._pool_.close()
